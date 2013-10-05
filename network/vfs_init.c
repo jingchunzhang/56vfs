@@ -78,7 +78,9 @@ void report_err_2_nm (char *file, const char *func, int line, int ret)
 {
 	char val[256] = {0x0};
 	snprintf(val, sizeof(val), "%s:%s:%d  ret=%d err %m", file, func, line, ret);
+#ifdef _USE_NM_
 	SetStr(VFS_TASK_MUTEX_ERR, val);
+#endif
 }
 
 int check_self_ip(uint32_t ip)

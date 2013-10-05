@@ -389,6 +389,7 @@ inline int get_task_count(int status)
 
 void report_2_nm()
 {
+#ifdef _USE_NM_
 	char buf[256] = {0x0};
 	snprintf(buf, sizeof(buf), "vfs_test=%u|task_timeout=%ld|task_run=%d|task_wait=%d|task_fin=%d|task_clean=%d|task_wait_sync=%d|task_wait_sync_ip=%d|task_wait_tmp=%d|", g_config.vfs_test, g_config.task_timeout, get_task_count(TASK_RUN), get_task_count(TASK_WAIT), get_task_count(TASK_FIN), get_task_count(TASK_CLEAN), get_task_count(TASK_WAIT_SYNC), get_task_count(TASK_WAIT_SYNC_IP), get_task_count(TASK_WAIT_TMP)); 
 	SetStr(VFS_TASK_COUNT, buf);
@@ -404,6 +405,7 @@ void report_2_nm()
 	}
 	SetInt(VFS_TASK_COUNT_INT, totaltask);
 	LOG(glogfd, LOG_NORMAL, "report 2 nm %s  %d\n", buf, totaltask);
+#endif
 }
 
 void check_task_timeout(t_vfs_tasklist *task)

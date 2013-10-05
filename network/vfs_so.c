@@ -202,7 +202,11 @@ static void do_send(int fd)
 		size_t len1 = len > GSIZE ? GSIZE : len;
 		while (1)
 		{
+#if __x86_64__	
 			n = sendfile64(fd, localfd, &start, len1);
+#else
+			n = sendfile(fd, localfd, &start, len1);
+#endif
 			if(n > 0) 
 			{
 				mybuff_skipfile(&(curcon->send_buff), n);

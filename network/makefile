@@ -2,7 +2,7 @@ NS=vfs_master
 CC=gcc
 CXX=g++
 INC+= 
-LIB+= -lpthread -ldl -lrt -rdynamic -L../lib -lvfs -lstdc++ -L../3rdlib -lnmshm 
+LIB+= -lpthread -ldl -lrt -rdynamic -L../lib -lvfs -lstdc++ 
 TARGET=$(NS)
 ALL:$(TARGET)
 

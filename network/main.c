@@ -155,7 +155,9 @@ int main(int argc, char **argv) {
 		fprintf(stderr, "get_self_role ERR!\n");
 		char buf[128] = {0x0};
 		snprintf(buf, sizeof(buf), "VFS Start ERROR, get_self_role ERR!");
+#ifdef _USE_NM_
 		SetStr(VFS_START_ERR, buf);
+#endif
 		goto error;
 	}
 	ICALL(init_load_tmp_status);

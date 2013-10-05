@@ -296,7 +296,11 @@ static int do_send(int fd)
 		size_t len1 = len > GSIZE ? GSIZE : len;
 		while (1)
 		{
+#if __x86_64__
 			n = sendfile64(fd, lfd, &start, len1);
+#else
+			n = sendfile(fd, lfd, &start, len1);
+#endif
 			if(n > 0) 
 			{
 				mybuff_skipfile(&(curcon->send_buff), n);
@@ -514,7 +518,9 @@ static void do_run(struct threadstat *thst)
 		{
 			char val[256] = {0x0};
 			snprintf(val, sizeof(val), "%s connect %s:%d err %m\n", self_ipinfo.sip, serverip, serverport);
+#ifdef _USE_NM_
 			SetStr(VFS_STR_CONNECT_E, val);
+#endif
 			LOG(vfs_agent_log, LOG_ERROR, "%s", val);
 			continue;
 		}
@@ -525,7 +531,9 @@ static void do_run(struct threadstat *thst)
 	{
 		char val[256] = {0x0};
 		snprintf(val, sizeof(val), "%s connect %s:%d err %m\n", self_ipinfo.sip, serverip, serverport);
+#ifdef _USE_NM_
 		SetStr(VFS_STR_CONNECT_E, val);
+#endif
 		LOG(vfs_agent_log, LOG_ERROR, "create socket err %m\n");
 		/*连接不上服务端时，为了确保vfs系统正常，需要清理回收资源 ，下个周期重新连接服务端 */
 		/*将临时信息写的文件系统，连接上服务端后，再上报该数据*/
