@@ -1,4 +1,4 @@
-SUBDIRS = lib core core/tracker core/cdn_node core/cdn_source core/data_transfer core/voss core/http cdc core/cdc_http core/cdc_so
+SUBDIRS = lib core core/cdn_node core/cdn_source core/data_transfer core/voss core/http cdc core/cdc_http core/cdc_so
 all:
 	@list='$(SUBDIRS)'; for subdir in $$list; do \
 	echo "Making all in $$list"; \
