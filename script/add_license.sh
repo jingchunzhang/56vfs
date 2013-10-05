@@ -11,8 +11,8 @@ add_license()
 	infile=$2
 	tmpfile=$infile.tmp
 	echo $1
-#	paste -s -d "\n" $1 $infile > $tmpfile
-#	mv $tmpfile $infile
+	paste -s -d "\n" $1 $infile > $tmpfile
+	mv $tmpfile $infile
 }
 
 p_dir()

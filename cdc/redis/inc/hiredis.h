@@ -1,4 +1,11 @@
 /*
+* Copyright (C) 2012-2014 jingchun.zhang email: jczhang AT 126.com ; danezhang77 AT gmail.com
+* 
+* 56VFS may be copied only under the terms of the GNU General Public License V3
+* Please visit the github https://github.com/jingchunzhang/56vfs for more detail.
+*/
+
+/*
  * Copyright (c) 2009-2011, Salvatore Sanfilippo <antirez at gmail dot com>
  * Copyright (c) 2010-2011, Pieter Noordhuis <pcnoordhuis at gmail dot com>
  *

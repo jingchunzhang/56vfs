@@ -1,4 +1,11 @@
 /*
+* Copyright (C) 2012-2014 jingchun.zhang email: jczhang AT 126.com ; danezhang77 AT gmail.com
+* 
+* 56VFS may be copied only under the terms of the GNU General Public License V3
+* Please visit the github https://github.com/jingchunzhang/56vfs for more detail.
+*/
+
+/*
  *CS FCS ip信息采用uint32_t 存储，便于存储和查找
  */
 #include "vfs_file_filter.h"

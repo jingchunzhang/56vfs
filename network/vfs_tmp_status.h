@@ -1,4 +1,11 @@
 /*
+* Copyright (C) 2012-2014 jingchun.zhang email: jczhang AT 126.com ; danezhang77 AT gmail.com
+* 
+* 56VFS may be copied only under the terms of the GNU General Public License V3
+* Please visit the github https://github.com/jingchunzhang/56vfs for more detail.
+*/
+
+/*
  *该文件实现vfs系统各个角色的临时任务状态管理
  *每条记录由下列字段组成：任务状态 '0' 任务结束 '1' 任务为GET文件 '2' 任务为PUSH文件 定长 1 
  * 空格作为分隔符

@@ -1,4 +1,11 @@
 /*
+* Copyright (C) 2012-2014 jingchun.zhang email: jczhang AT 126.com ; danezhang77 AT gmail.com
+* 
+* 56VFS may be copied only under the terms of the GNU General Public License V3
+* Please visit the github https://github.com/jingchunzhang/56vfs for more detail.
+*/
+
+/*
  *base文件，查询基础配置信息，设置相关基础状态及其它```
  *Tracker 数目较少，放在一个静态数组
  *CS和FCS数目较多，放在hash链表

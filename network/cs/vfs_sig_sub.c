@@ -1,3 +1,10 @@
+/*
+* Copyright (C) 2012-2014 jingchun.zhang email: jczhang AT 126.com ; danezhang77 AT gmail.com
+* 
+* 56VFS may be copied only under the terms of the GNU General Public License V3
+* Please visit the github https://github.com/jingchunzhang/56vfs for more detail.
+*/
+
 #include "c_api.h"
 
 static uint32_t get_a_ok_ip(t_cs_dir_info * csinfos, int isp, int8_t *index)
