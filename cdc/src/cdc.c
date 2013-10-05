@@ -43,7 +43,9 @@ static void report_2_nm(uint32_t id, char *f, int l)
 {
 	char msg[256] = {0x0};
 	snprintf(msg, sizeof(msg), "%s in %s:%d %m", alarm_str[id - NM_STR_CDC_BASE], f, l);
+#ifdef _USE_NM_
 	SetStr(id, msg);
+#endif
 }
 
 #include "cdc_sub.c"

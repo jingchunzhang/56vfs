@@ -1,4 +1,4 @@
-SUBDIRS = lib src redis/lib redis/src
+SUBDIRS = lib src redis/lib redis/src redis/hiredis
 all:
 	@list='$(SUBDIRS)'; for subdir in $$list; do \
 	echo "Making all in $$list"; \
