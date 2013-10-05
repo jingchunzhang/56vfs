@@ -257,6 +257,7 @@ static void * maintain_log(void *arg)
 		scanlogs();
 		sleep(10);
 	}
+	return NULL;
 }
 
 int init_log()
