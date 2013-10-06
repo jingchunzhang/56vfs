@@ -283,7 +283,7 @@ static void do_dispatch_to_cs_isp(int isp, t_task_base *base)
 	set_task_to_tmp(task);
 }
 
-int do_dispatch(t_vfs_tasklist *task)
+static int do_dispatch(t_vfs_tasklist *task)
 {
 	t_task_base *base = (t_task_base*) &(task->task.base);
 	t_cs_dir_info  cs;
