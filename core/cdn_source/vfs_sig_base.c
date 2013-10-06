@@ -268,7 +268,7 @@ static void do_dispatch_to_cs_isp(int isp, t_task_base *base)
 	t_vfs_tasklist *task = NULL;
 	if (vfs_get_task(&task, TASK_HOME))
 	{
-		LOG(vfs_sig_log_err, LOG_ERROR, "[%s] do_newtask ERROR!\n", FUNC);
+		LOG(vfs_sig_log, LOG_ERROR, "[%s] do_newtask ERROR!\n", FUNC);
 		return;
 	}
 	list_del_init(&(task->userlist));
@@ -289,19 +289,19 @@ int do_dispatch(t_vfs_tasklist *task)
 	t_cs_dir_info  cs;
 	if(get_cs_info_by_path(base->filename, &cs))
 	{
-		LOG(vfs_sig_log_err, LOG_ERROR, "get_cs_info_by_path %s ERROR!\n", base->filename);
+		LOG(vfs_sig_log, LOG_ERROR, "get_cs_info_by_path %s ERROR!\n", base->filename);
 		return 1;
 	}
 	uint32_t ip = get_a_good_ip(&cs, task->task.sub.isp, &(task->task));
 	if (ip == 0)
 	{
-		LOG(vfs_sig_log_err, LOG_ERROR, "can not get good ip isp:%s:%s\n", ispname[task->task.sub.isp], base->filename);
+		LOG(vfs_sig_log, LOG_ERROR, "can not get good ip isp:%s:%s\n", ispname[task->task.sub.isp], base->filename);
 		return 1;
 	}
-	vfs_tracker_peer *peer;
+	vfs_fcs_peer *peer;
 	if (find_ip_stat(ip, &peer))
 	{
-		LOG(vfs_sig_log_err, LOG_ERROR, "find_ip_stat [%u] ERROR [%s:%s:%d]!\n", ip, ID, FUNC, LN);
+		LOG(vfs_sig_log, LOG_ERROR, "find_ip_stat [%u] ERROR [%s:%s:%d]!\n", ip, ID, FUNC, LN);
 		return 1;
 	}
 
