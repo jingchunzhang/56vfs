@@ -123,6 +123,7 @@ static void inotify_event_handler(struct inotify_event *event)
 	memset(&(vfs_task->task), 0, sizeof(t_vfs_taskinfo));
 	task.starttime = time(NULL);
 	memcpy(&(vfs_task->task.base), &task, sizeof(task));
+	vfs_task->task.sub.isp = MAXISP;
 	vfs_set_task(vfs_task, TASK_WAIT_SYNC);	
 	
 	LOG(vfs_sig_log, LOG_DEBUG, "inotify add task to task_wait filepath %s, task type %d\n", task.filename, task.type);

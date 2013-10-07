@@ -690,6 +690,7 @@ static void process_dir_sync(char *path, time_t endtime, time_t starttime, char 
 			}
 			memcpy(&(vfs_task->task.base), &base, sizeof(base));
 			LOG(vfs_sig_log, LOG_NORMAL, "dispatch old task %s:%c\n", base.filename, base.type);
+			vfs_task->task.sub.isp = MAXISP;
 			vfs_set_task(vfs_task, TASK_WAIT_SYNC);	
 		}
 	}
