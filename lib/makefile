@@ -11,10 +11,11 @@ REAL_CFLAGS=$(OPTIMIZATION) -fPIC $(CFLAGS) $(WARNINGS) $(DEBUG)
 REAL_LDFLAGS=$(LDFLAGS)
 LIB+= -lpthread -ldl -lrt -rdynamic -lz -L./ -lmnm
 MLIB=$(LIB) libmnm.a
-CFLAGS+= -g -O2 -pipe -Wall -fno-strict-aliasing -D_GNU_SOURCE -D_REENTRANT -Wl,-Bdynamic -fPIC
+INCLUDE = -I../inc
+CFLAGS+= -g -O2 -pipe -Wall -fno-strict-aliasing -D_GNU_SOURCE -D_REENTRANT -Wl,-Bdynamic -fPIC 
 #INCLUDE = -I/home/jingchun.zhang/st/mysql/include/mysql
-CFLAGS+= $(INCLUDE)
-TARGET = testmd5
+CFLAGS+= $(INCLUDE) 
+#TARGET = testmd5
 
 STLIBSUFFIX=a
 STLIBNAME=$(LIBNAME).$(STLIBSUFFIX)
