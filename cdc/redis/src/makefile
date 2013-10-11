@@ -1,6 +1,6 @@
 CC=gcc
 CXX=g++
-INC+= -I./ -I../inc -I../../../lib -I../../../3rdlib 
+INC+= -I./ -I../inc -I../../../inc -I../../../3rdlib 
 LIB+= -lpthread -ldl -lrt -rdynamic 
 LIB+=-L../../lib/ -lcdc -L../../../lib/ -lvfs -L../lib/ -lcdc_redis_api -L../hiredis/ -lhiredis
 

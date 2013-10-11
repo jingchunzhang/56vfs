@@ -5,7 +5,7 @@ CXX=gcc
 # Fallback to gcc when $CC is not in $PATH.
 REAL_CFLAGS=$(OPTIMIZATION) -fPIC $(CFLAGS) $(WARNINGS) $(DEBUG)
 REAL_LDFLAGS=$(LDFLAGS)
-INCLUDE= -I../inc -I../../lib -I../../../lib
+INCLUDE= -I../inc -I../../../inc
 CFLAGS+= -g -O2 -pipe -Wall -fno-strict-aliasing -D_GNU_SOURCE -D_REENTRANT -Wl,-Bdynamic -fPIC
 LIB+=-L../../lib/ -lcdc 
 CFLAGS+= $(INCLUDE)
