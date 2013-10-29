@@ -1,4 +1,4 @@
-SUBDIRS = lib network network/tracker network/cs network/fcs network/data network/voss network/http cdc network/cdc_http network/cdc_so
+SUBDIRS = lib 3rdlib network network/tracker network/cs network/fcs network/data network/voss network/http cdc network/cdc_http network/cdc_so
 all:
 	@list='$(SUBDIRS)'; for subdir in $$list; do \
 	echo "Making all in $$list"; \
