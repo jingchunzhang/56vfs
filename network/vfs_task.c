@@ -30,10 +30,6 @@ const char *task_status[TASK_UNKNOWN] = {"TASK_DELAY", "TASK_WAIT", "TASK_WAIT_S
 const char *over_status[OVER_LAST] = {"OVER_UNKNOWN", "OVER_OK", "OVER_E_MD5", "OVER_PEERERR", "TASK_EXIST", "OVER_PEERCLOSE", "OVER_UNLINK", "OVER_TIMEOUT", "OVER_MALLOC", "OVER_SRC_DOMAIN_ERR", "OVER_SRC_IP_OFFLINE", "OVER_E_OPEN_SRCFILE", "OVER_E_OPEN_DSTFILE", "OVER_E_IP", "OVER_E_TYPE", "OVER_SEND_LEN", "OVER_TOO_MANY_TRY", "OVER_DISK_ERR"};
 /*
  * every status have a list
- * 0:wait
- * 1:runing
- * 2:fin
- * 3:all
  */
 
 int vfs_get_task(t_vfs_tasklist **task, int status)
@@ -181,6 +177,7 @@ static int get_vfs_task_hash(t_task_base *base, t_task_sub *sub)
 		snprintf(buf, sizeof(buf), "%s|%s|%d|", base->filename, base->src_domain, base->type);
 	else if (self_ipinfo.role == ROLE_TRACKER)
 		snprintf(buf, sizeof(buf), "%s|%s|%d|%u|", base->filename, base->src_domain, base->type, sub->isp);
+	LOG(glogfd, LOG_NORMAL, "%s:%d %s\n", FUNC, LN, buf);
 	return r5hash(buf);
 }
 

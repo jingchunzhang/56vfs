@@ -269,7 +269,7 @@ static void do_recv(int fd)
 			mybuff_setdata(&(curcon->recv_buff), iobuf, n);
 			if (n == init_buff_size)
 			{
-				LOG(glogfd, LOG_DEBUG, "fd[%d] need recv nextloop %d\n", fd, n);
+				LOG(glogfd, LOG_TRACE, "fd[%d] need recv nextloop %d\n", fd, n);
 				continue;
 			}
 			break;
@@ -350,6 +350,7 @@ int vfs_signalling_thread(void *arg)
 	t_thread_arg *argp = (t_thread_arg *)arg;
 	if (sub_init_signalling(argp->name))
 	{
+		LOG(glogfd, LOG_ERROR, "sub_init_signalling %s err %m\n", argp->name);
 		stop = 1;
 		return -1;
 	}

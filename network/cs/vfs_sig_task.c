@@ -222,8 +222,15 @@ int sync_task_2_group(t_vfs_tasklist *task)
 	int i = 0;
 	for (i = 0; i < csinfo->index; i++)
 	{
-		if (csinfo->isp[i] != self_ipinfo.isp)
+		if (self_ipinfo.archive)
+		{
+			LOG(vfs_sig_log, LOG_NORMAL, "ip[%u] %u %u %u %u!\n", csinfo->ip[i], csinfo->real_isp[i], csinfo->archive_isp[i], self_ipinfo.real_isp, self_ipinfo.archive_isp);
+			if (csinfo->real_isp[i] != self_ipinfo.real_isp || csinfo->archive_isp[i] != self_ipinfo.archive_isp)
+				continue;
+		}
+		else if (csinfo->isp[i] != self_ipinfo.isp)
 			continue;
+
 		if (csinfo->ip[i] == str2ip(self_ipinfo.s_ip))
 			continue;
 		if (find_ip_stat(csinfo->ip[i], &peer))

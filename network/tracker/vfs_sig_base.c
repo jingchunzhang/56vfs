@@ -35,6 +35,7 @@ static void active_connect(t_ip_info *ipinfo)
 	add_fd_2_efd(fd);
 	struct conn *curcon = &acon[fd];
 	vfs_tracker_peer *peer = (vfs_tracker_peer *) curcon->user;
+	peer->archive_isp = ipinfo->archive_isp;
 	LOG(vfs_sig_log, LOG_NORMAL, "connect %s:%d fd:%d:%d\n", t, port, fd, peer->fd);
 	t_vfs_sig_head h;
 	t_vfs_sig_body b;

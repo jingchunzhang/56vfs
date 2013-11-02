@@ -53,13 +53,15 @@ static void process_timeout (t_vfs_tasklist *task)
 	vfs_set_task(task, TASK_CLEAN);
 }
 
-static uint32_t get_a_good_ip(t_cs_dir_info * csinfos, int isp, t_vfs_taskinfo *task)
+static uint32_t get_a_good_ip(t_cs_dir_info * csinfos, t_vfs_taskinfo *task)
 {
 	if (csinfos->index == 0)
 	{
 		LOG(vfs_sig_log_err, LOG_ERROR, "cs_dir index %d\n", csinfos->index);
 		return 0;
 	}
+	uint8_t isp = task->sub.isp;
+	uint8_t archive_isp = task->sub.archive_isp;
 	uint32_t ip = 0;
 	int i= 0;
 	int mintask = 0;
@@ -68,7 +70,9 @@ static uint32_t get_a_good_ip(t_cs_dir_info * csinfos, int isp, t_vfs_taskinfo *
 	vfs_tracker_peer *peer;
 	for (i = 0; i < csinfos->index; i++)
 	{
-		if (csinfos->isp[i] != isp)
+		if (archive_isp == ISP_FCS && csinfos->isp[i] != isp)
+			continue;
+		if (archive_isp != ISP_FCS && (archive_isp != csinfos->archive_isp[i] || csinfos->real_isp[i] != isp))
 			continue;
 		if (find_ip_stat(csinfos->ip[i], &peer))
 		{
@@ -100,7 +104,7 @@ static uint32_t get_a_good_ip(t_cs_dir_info * csinfos, int isp, t_vfs_taskinfo *
 	return ip;
 }
 
-static void create_delay_task(int isp, t_task_base *base)
+static void create_delay_task(uint8_t isp, uint8_t archive_isp, t_task_base *base)
 {
 	t_vfs_tasklist *task = NULL;
 	if (vfs_get_task(&task, TASK_HOME))
@@ -115,6 +119,7 @@ static void create_delay_task(int isp, t_task_base *base)
 
 	dump_task_info ((char *) FUNC, LN, base);
 	task->task.sub.isp = isp;
+	task->task.sub.archive_isp = archive_isp;
 	vfs_set_task(task, TASK_WAIT);
 	LOG(vfs_sig_log, LOG_DEBUG, "[%s] [%d] create_delay_task!\n", base->filename, isp);
 	set_task_to_tmp(task);
@@ -129,7 +134,7 @@ int do_dispatch(t_vfs_tasklist *task)
 		LOG(vfs_sig_log_err, LOG_ERROR, "get_cs_info_by_path %s ERROR!\n", base->filename);
 		return 1;
 	}
-	uint32_t ip = get_a_good_ip(&cs, task->task.sub.isp, &(task->task));
+	uint32_t ip = get_a_good_ip(&cs, &(task->task));
 	if (ip == 0)
 	{
 		LOG(vfs_sig_log_err, LOG_ERROR, "can not get good ip isp:%s:%s\n", ispname[task->task.sub.isp], base->filename);
@@ -158,10 +163,12 @@ int do_dispatch(t_vfs_tasklist *task)
 
 int do_newtask(int fd, t_vfs_sig_head *h, t_vfs_sig_body *b)
 {
+	struct conn *curcon = &acon[fd];
+	vfs_tracker_peer *peer = (vfs_tracker_peer *) curcon->user;
 	t_task_base * base = (t_task_base *)b;
 	base->starttime = time(NULL);
-	create_delay_task(TEL, base);
-	create_delay_task(CNC, base);
+	create_delay_task(TEL, peer->archive_isp, base);
+	create_delay_task(CNC, peer->archive_isp, base);
 	return 0;
 }
   
@@ -194,9 +201,13 @@ int update_task(int fd, t_vfs_sig_head *h, t_vfs_sig_body *b)
 	struct conn *curcon = &acon[fd];
 	vfs_tracker_peer *peer_cs = (vfs_tracker_peer *) curcon->user;
 	t_task_base * base = (t_task_base *)b;
+	LOG(vfs_sig_log, LOG_DEBUG, "ip = %u archive_isp = %u real_isp = %u file = %s\n", peer_cs->ip, peer_cs->archive_isp,  peer_cs->real_isp, base->filename);
 	t_task_sub sub;
 	memset(&sub, 0, sizeof(sub));
-	sub.isp = peer_cs->isp;
+	if (peer_cs->archive_isp == ISP_FCS)
+		sub.isp = peer_cs->isp;
+	else
+		sub.isp = peer_cs->real_isp;
 	t_vfs_tasklist *task = NULL;
 	vfs_tracker_peer *peer = NULL;
 

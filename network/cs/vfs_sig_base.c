@@ -200,13 +200,16 @@ static void scan_cfg_iplist_and_connect()
 		{
 			if (ipinfo->ipinfo.isself)
 				continue;
-			if (self_ipinfo.isp == MP4)
+			if (ipinfo->ipinfo.role == ROLE_CS && self_ipinfo.archive_isp == ISP_FCS)
 			{
-				if (ipinfo->ipinfo.role != ROLE_FCS)
+				if (self_ipinfo.isp == MP4)
+				{
+					if (ipinfo->ipinfo.role != ROLE_FCS)
+						continue;
+				}
+				if (ipinfo->ipinfo.role == ROLE_CS && ipinfo->ipinfo.isp >= EDU)
 					continue;
 			}
-			if (ipinfo->ipinfo.role == ROLE_CS && ipinfo->ipinfo.isp >= EDU)
-				continue;
 			if (ipinfo->ipinfo.role == ROLE_CS && strcmp(self_ipinfo.dirs[0], ipinfo->ipinfo.dirs[0]))
 				continue;
 			if (ipinfo->ipinfo.role == ROLE_VOSS_MASTER)
@@ -233,24 +236,6 @@ static void scan_cfg_iplist_and_connect()
 		i = 0;
 }
 
-static void output_tmp_sync_ip(t_vfs_sync_task *sync_task, uint32_t ip)
-{
-	char tmpbuf[4096] = {0x0};
-	int len = 0;
-	len += snprintf(tmpbuf + len, sizeof(tmpbuf) - len, "%u:%s:%d:%d:%ld:%ld:%d\n", ip, sync_task->domain, sync_task->d1, sync_task->d2, sync_task->starttime, sync_task->endtime, sync_task->type);
-	tmpbuf[len] = 0x0;
-	char outfile[256] = {0x0};
-	snprintf(outfile, sizeof(outfile), "%s/%s/archive_sync_ip_req", g_config.path, path_dirs[PATH_INDIR]);
-	FILE *fp = fopen(outfile, "a+");
-	if (fp)
-	{
-		fprintf(fp, "%s", tmpbuf);
-		fclose(fp);
-		return;
-	}
-	LOG(vfs_sig_log_err, LOG_ERROR, "open [%s] err %m:%s", outfile, tmpbuf);
-}
-
 static void do_sub_sync(t_vfs_sync_list *vfs_sync, vfs_cs_peer *peer)
 {
 	char sip[16] = {0x0};
@@ -266,137 +251,86 @@ static void do_sub_sync(t_vfs_sync_list *vfs_sync, vfs_cs_peer *peer)
 		n = create_sig_msg(SYNC_DEL_REQ, TASK_SYNC, (t_vfs_sig_body *)&(vfs_sync->sync_task), obuf, sizeof(vfs_sync->sync_task));
 	set_client_data(peer->fd, obuf, n);
 	modify_fd_event(peer->fd, EPOLLOUT);
-	if (self_ipinfo.archive)
-	{
-		t_vfs_sync_list *tmp_vfs_sync = (t_vfs_sync_list*) malloc (sizeof(t_vfs_sync_list));
-		if (tmp_vfs_sync == NULL)
-			LOG(vfs_sig_log_err, LOG_ERROR, "malloc err %m\n");
-		else
-		{
-			memset(tmp_vfs_sync, 0, sizeof(t_vfs_sync_list));
-			memcpy(tmp_vfs_sync, vfs_sync, sizeof(t_vfs_sync_list));
-			INIT_LIST_HEAD(&(tmp_vfs_sync->list));
-		}
-		peer->vfs_sync_list = tmp_vfs_sync;
-	}
-	else
-		peer->vfs_sync_list = vfs_sync;
+	peer->vfs_sync_list = vfs_sync;
 	sync_para.flag = 1;
 	sync_para.last = time(NULL);
 }
 
-static int do_tmp_sync_ip()
+static int decompose_sync_dir_archive(t_vfs_sync_task *sync_task)
 {
-	char infile[256] = {0x0};
-	snprintf(infile, sizeof(infile), "%s/%s/archive_sync_ip_req", g_config.path, path_dirs[PATH_INDIR]);
-	if (access(infile, R_OK))
-	{
-		LOG(vfs_sig_log, LOG_NORMAL, "%s no exist!\n", infile);
-		return 0;
-	}
+	int d1 = sync_task->d1;
+	int d2 = sync_task->d2;
 
-	int bkflag = 0;
-	int tmpflag = 0;
-	char bkfile[256] = {0x0};
-	char tmpfile[256] = {0x0};
-	snprintf(bkfile, sizeof(bkfile), "%s/%s/archive_sync_%ld", g_config.path, path_dirs[PATH_BKDIR], time(NULL));
-	FILE *bkfp = fopen(bkfile, "a+");
-	if (bkfp == NULL)
+	t_cs_dir_info cs;
+	t_cs_dir_info * csinfo = &cs;
+	if (get_cs_info(d1, d2, csinfo))
 	{
-		LOG(vfs_sig_log, LOG_ERROR, "open %s err %m\n", bkfile);
-		return 0;
+		LOG(vfs_sig_log_err, LOG_ERROR, "get_cs_info err %d %d!\n", d1, d2);
+		return -1;
 	}
-	FILE *tmpfp = fopen(tmpfile, "a+");
-	if (tmpfp == NULL)
+	uint32_t selfip = str2ip(self_ipinfo.sip);
+	int j = 0;
+	for (j = 0; j < csinfo->index; j++)
 	{
-		LOG(vfs_sig_log, LOG_ERROR, "open %s err %m\n", tmpfile);
-		fclose(bkfp);
-		return 0;
-	}
-	snprintf(tmpfile, sizeof(tmpfile), "%s/%s/archive_sync_%ld", g_config.path, path_dirs[PATH_TMPDIR], time(NULL));
-	FILE *fp = fopen(infile, "r");
-	if (fp)
-	{
-		t_vfs_sync_list vfs_sync;
-		t_vfs_sync_task *sync_task = (t_vfs_sync_task *)&(vfs_sync.sync_task);
-		char buf[1024] = {0x0};
-		while (fgets(buf, sizeof(buf), fp))
+		if (csinfo->archive_isp[j] == ISP_FCS && csinfo->isp[j] != self_ipinfo.real_isp)
+			continue;
+		if (csinfo->archive_isp[j] != ISP_FCS && csinfo->archive_isp[j] != self_ipinfo.archive_isp)
+			continue;
+		if (csinfo->ip[j] == selfip)
+			continue;
+		t_vfs_sync_list *vfs_sync = (t_vfs_sync_list *)malloc(sizeof(t_vfs_sync_list));
+		if (vfs_sync == NULL)
 		{
-			uint32_t ip = (uint32_t)atol(buf);
-			vfs_cs_peer *peer = NULL;
-			if (find_ip_stat(ip, &peer))
-			{
-				LOG(vfs_sig_log, LOG_ERROR, "ip %u not active \n", ip);
-				fprintf(tmpfp, "%s", buf);
-			}
-			else
-			{
-			}
+			LOG(vfs_sig_log_err, LOG_ERROR, "malloc err, abort! %m\n");
+			stop = 1;
+			pthread_exit(NULL);
 		}
-		fclose(fp);
-	}
-	else
-	{
-	}
-	if (bkflag)
-	{
-	}
-	if (tmpflag)
-	{
+		memset(vfs_sync, 0, sizeof(t_vfs_sync_list));
+		memcpy(&(vfs_sync->sync_task), sync_task, sizeof(t_vfs_sync_task));
+		vfs_sync->sync_task.ip = csinfo->ip[j];
+		INIT_LIST_HEAD(&(vfs_sync->list));
+		list_add_tail(&(vfs_sync->list), &sync_list);
 	}
 	return 0;
 }
 
 static void do_active_sync_archive()
 {
-	if (do_tmp_sync_ip())
-		return;
 	t_vfs_sync_list *vfs_sync = NULL;
+	list_head_t tmp_list;
+	INIT_LIST_HEAD(&tmp_list);
 	list_head_t *l;
-	int get = 0;
 	list_for_each_entry_safe_l(vfs_sync, l, &sync_list, list)
 	{
 		list_del_init(&(vfs_sync->list));
-		get = 1;
-		break;
-	}
-	if (get == 0)
-	{
-		LOG(vfs_sig_log, LOG_NORMAL, "no sync_task in list!\n");
-		sync_para.flag = 2;
-		return;
-	}
-	t_vfs_sync_task *sync_task = (t_vfs_sync_task *)&(vfs_sync->sync_task);
-	int d1 = sync_task->d1;
-	int d2 = sync_task->d2;
-	LOG(vfs_sig_log, LOG_NORMAL, "get sync task %d %d %s\n", d1, d2, sync_task->domain);
-
-	t_cs_dir_info cs;
-	t_cs_dir_info * csinfo = &cs;
-	if (get_cs_info(d1, d2, csinfo))
-	{
-		LOG(vfs_sig_log, LOG_DEBUG, "next loop!\n");
-		list_add_tail(&(vfs_sync->list), &sync_list);
-		return;
-	}
-	vfs_cs_peer *peer = NULL;
-	uint32_t selfip = str2ip(self_ipinfo.sip);
-	int j = 0;
-	for (j = 0; j < csinfo->index; j++)
-	{
-		if (csinfo->archive_isp[j] != UNKNOW_ISP && csinfo->archive_isp[j] != self_ipinfo.archive_isp)
-			continue;
-		if (csinfo->ip[j] == selfip)
-			continue;
-		if (find_ip_stat(csinfo->ip[j], &peer))
+		t_vfs_sync_task *sync_task = (t_vfs_sync_task *)&(vfs_sync->sync_task);
+		if (sync_task->ip == 0)
 		{
-			LOG(vfs_sig_log, LOG_DEBUG, "ip[%u] not in active !\n", csinfo->ip[j]);
-			output_tmp_sync_ip(sync_task, csinfo->ip[j]);
+			if (decompose_sync_dir_archive(sync_task))
+				list_add_tail(&(vfs_sync->list), &sync_list);
+			else
+				free(vfs_sync);
 			continue;
 		}
-		do_sub_sync(vfs_sync, peer);
+		vfs_cs_peer *peer = NULL;
+		if(find_ip_stat(sync_task->ip, &peer))
+		{
+			LOG(vfs_sig_log_err, LOG_ERROR, "ip [%u] not on line !\n", sync_task->ip);
+			list_add_tail(&(vfs_sync->list), &tmp_list);
+			continue;
+		}
+
+		if (peer->vfs_sync_list)
+			list_add_tail(&(vfs_sync->list), &tmp_list);
+		else
+			do_sub_sync(vfs_sync, peer);
 	}
-	free(vfs_sync);
+
+	list_for_each_entry_safe_l(vfs_sync, l, &tmp_list, list)
+	{
+		list_del_init(&(vfs_sync->list));
+		list_add_tail(&(vfs_sync->list), &sync_list);
+	}
 }
 
 static void do_active_sync()

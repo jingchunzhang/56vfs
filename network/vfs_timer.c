@@ -4,6 +4,7 @@
 * 56VFS may be copied only under the terms of the GNU General Public License V3
 */
 
+#include "vfs_init.h"
 #include "log.h"
 #include "vfs_timer.h"
 #include "list.h"
@@ -12,8 +13,10 @@
 #include <stddef.h>
 
 extern int glogfd;
+extern t_g_config g_config;
 static list_head_t delay_home;
 static list_head_t delay_active;
+static pthread_mutex_t delay_mutex = PTHREAD_MUTEX_INITIALIZER;
 static int default_max = 1024;
 
 int delay_task_init()
@@ -40,6 +43,19 @@ int delay_task_init()
 
 int add_to_delay_task(t_vfs_timer *vfs_timer)
 {
+	int ret;
+	struct timespec to;
+	to.tv_sec = g_config.lock_timeout + time(NULL);
+	to.tv_nsec = 0;
+	ret = pthread_mutex_timedlock(&delay_mutex, &to);
+	if (ret != 0)
+	{
+		if (ret != EDEADLK)
+		{
+			LOG(glogfd, LOG_ERROR, "ERR %s:%d pthread_mutex_timedlock error %d\n", FUNC, LN, ret);
+			return -1;
+		}
+	}
 	t_vfs_timer_list *timer = NULL;
 	list_head_t *l;
 	int get = 0;
@@ -52,21 +68,36 @@ int add_to_delay_task(t_vfs_timer *vfs_timer)
 	if (get == 0)
 		timer = (t_vfs_timer_list *)malloc(sizeof(t_vfs_timer_list));
 	if (timer == NULL)
-	{
 		LOG(glogfd, LOG_ERROR, "malloc err %m\n");
-		return -1;
+	else
+	{
+		INIT_LIST_HEAD(&(timer->tlist));
+		time_t cur = time(NULL);
+		vfs_timer->next_time = cur + vfs_timer->span_time;   /*avoid time no sync*/
+		memcpy(&(timer->vfs_timer), vfs_timer, sizeof(t_vfs_timer));
+		LOG(glogfd, LOG_DEBUG, "args [%s] add into delay [%d] [%ld] [%ld]\n", timer->vfs_timer.args, timer->vfs_timer.span_time, timer->vfs_timer.next_time, cur);
+		list_add(&(timer->tlist), &delay_active);
 	}
-	INIT_LIST_HEAD(&(timer->tlist));
-	time_t cur = time(NULL);
-	vfs_timer->next_time = cur + vfs_timer->span_time;   /*avoid time no sync*/
-	memcpy(&(timer->vfs_timer), vfs_timer, sizeof(t_vfs_timer));
-	LOG(glogfd, LOG_DEBUG, "args [%s] add into delay [%d] [%ld] [%ld]\n", timer->vfs_timer.args, timer->vfs_timer.span_time, timer->vfs_timer.next_time, cur);
-	list_add(&(timer->tlist), &delay_active);
+	if (pthread_mutex_unlock(&delay_mutex))
+		LOG(glogfd, LOG_ERROR, "ERR %s:%d pthread_mutex_unlock error %m\n", FUNC, LN);
 	return 0;
 }
 
 void scan_delay_task()
 {
+	int ret;
+	struct timespec to;
+	to.tv_sec = g_config.lock_timeout + time(NULL);
+	to.tv_nsec = 0;
+	ret = pthread_mutex_timedlock(&delay_mutex, &to);
+	if (ret != 0)
+	{
+		if (ret != EDEADLK)
+		{
+			LOG(glogfd, LOG_ERROR, "ERR %s:%d pthread_mutex_timedlock error %d\n", FUNC, LN, ret);
+			return ;
+		}
+	}
 	t_vfs_timer_list *timer = NULL;
 	list_head_t *l;
 	time_t cur = time(NULL);
@@ -86,5 +117,7 @@ void scan_delay_task()
 			list_add(&(timer->tlist), &delay_home);
 		}
 	}
+	if (pthread_mutex_unlock(&delay_mutex))
+		LOG(glogfd, LOG_ERROR, "ERR %s:%d pthread_mutex_unlock error %m\n", FUNC, LN);
 }
 

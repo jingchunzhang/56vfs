@@ -239,7 +239,7 @@ static void pushcs(t_cs_dir_info *cs, char *sip, uint8_t isp, uint8_t archive_is
 	{
 		if (cs->ip[i] == ip)
 		{
-			if (archive_isp == UNKNOW_ISP)
+			if (archive_isp == ISP_FCS)
 			{
 				LOG(glogfd, LOG_ERROR, "ip dup %u\n", ip);
 				return;
@@ -269,6 +269,9 @@ static void pushcs(t_cs_dir_info *cs, char *sip, uint8_t isp, uint8_t archive_is
 	if (get_ip_info(&ipinfo0, sip, 0) == 0)
 	{
 		LOG(glogfd, LOG_TRACE, "exist ip %u\n", ip);
+		ipinfo0->real_isp = isp;
+		if (archive_isp != ISP_FCS)
+			ipinfo0->archive = 1;
 		if (reuse)
 		{
 			t_ip_info_list *server = (t_ip_info_list *) (ipinfo0 - offsetof(t_ip_info_list, ipinfo));
@@ -300,12 +303,10 @@ static void pushcs(t_cs_dir_info *cs, char *sip, uint8_t isp, uint8_t archive_is
 	t_ip_info ipinfo;
 	memset(&ipinfo, 0, sizeof(ipinfo));
 	ipinfo.isp = isp;
+	ipinfo.real_isp = isp;
 	ipinfo.archive_isp = archive_isp;
-	if (archive_isp != UNKNOW_ISP)
-	{
+	if (archive_isp != ISP_FCS)
 		ipinfo.archive = 1;
-		ipinfo.real_isp = isp;
-	}
 	ipinfo.ip = ip;
 	ipinfo.role = ROLE_CS;
 	snprintf(ipinfo.sip, sizeof(ipinfo.sip), "%s", sip);
@@ -559,13 +560,14 @@ static int init_fcs(uint8_t isp)
 			continue;
 		}
 		ipinfo.isp = isp;
-		ipinfo.archive_isp = UNKNOW_ISP;
+		ipinfo.archive_isp = isp;
 		ipinfo.role = ROLE_FCS;
 		fcslist[atoi(ipinfo.sip+3)%MAXFCS] = isp;
 		ipinfo.ip = ip;
 		add_ip_info(&ipinfo);
 	}
 	fclose(fp);
+	LOG(glogfd, LOG_NORMAL, "ip %s %s\n", ipinfo.sip, ipinfo.s_ip);
 	return 0;
 }
 
@@ -671,7 +673,7 @@ static int init_csinfo()
 		}
 
 		LOG(glogfd, LOG_NORMAL, "%s:%d process cs %s\n", FUNC, LN, fullfile);
-		if (process_csfile(isp, UNKNOW_ISP, fullfile))
+		if (process_csfile(isp, ISP_FCS, fullfile))
 		{
 			ret = -1;
 			break;
@@ -791,66 +793,6 @@ void oper_ip_off_line(uint32_t ip, int type)
 	}
 }
 
-int reload_cfg()
-{
-	struct timespec to;
-	to.tv_sec = g_config.lock_timeout + time(NULL);
-	to.tv_nsec = 0;
-	int ret = pthread_rwlock_timedwrlock(&init_rwmutex, &to);
-	if (ret != 0)
-	{
-		if (ret != EDEADLK)
-		{
-			LOG(glogfd, LOG_ERROR, "ERR %s:%d pthread_rwlock_timedwrlock error %d\n", FUNC, LN, ret);
-			report_err_2_nm(ID, FUNC, LN, ret);
-			return -2;
-		}
-	}
-	memset(csinfo, 0, sizeof(csinfo));
-	int index = 0;
-	for (index = 0; index < 256; index++)
-	{
-		list_head_t *hashlist = &(cfg_iplist[index&ALLMASK]);
-		t_ip_info_list *server = NULL;
-		list_head_t *l;
-		list_for_each_entry_safe_l(server, l, hashlist, hlist)
-		{
-			list_del_init(&(server->hlist));
-			list_del_init(&(server->hotlist));
-			list_del_init(&(server->isplist));
-			list_del_init(&(server->archive_list));
-			list_add(&(server->hlist), &iphome);
-		}
-	}
-	if (init_csinfo())
-	{
-		LOG(glogfd, LOG_ERROR, "init_csinfo error %m\n");
-		return -1;
-	}
-	if (init_tracker())
-	{
-		LOG(glogfd, LOG_ERROR, "init_tracker error %m\n");
-		return -1;
-	}
-	if (init_fcs(ISP_FCS))
-	{
-		LOG(glogfd, LOG_ERROR, "init_fcs error %m\n");
-		return -1;
-	}
-	if (init_voss())
-	{
-		LOG(glogfd, LOG_ERROR, "init_voss error %m\n");
-		return -1;
-	}
-	if (pthread_rwlock_unlock(&init_rwmutex))
-	{
-		LOG(glogfd, LOG_ERROR, "ERR %s:%d pthread_rwlock_unlock error %m\n", FUNC, LN);
-		report_err_2_nm(ID, FUNC, LN, ret);
-	}
-	refresh_offline();
-	return 0;
-}
-
 static void init_cs_isp()
 {
 	int i = 0;
@@ -882,6 +824,67 @@ static void init_cs_isp()
 	ispname[ISP_TRACKER] = "tracker";
 	ispname[ISP_FCS] = "fcs";
 	ispname[ISP_VOSS] = "voss";
+}
+
+int reload_cfg()
+{
+	struct timespec to;
+	to.tv_sec = g_config.lock_timeout + time(NULL);
+	to.tv_nsec = 0;
+	int ret = pthread_rwlock_timedwrlock(&init_rwmutex, &to);
+	if (ret != 0)
+	{
+		if (ret != EDEADLK)
+		{
+			LOG(glogfd, LOG_ERROR, "ERR %s:%d pthread_rwlock_timedwrlock error %d\n", FUNC, LN, ret);
+			report_err_2_nm(ID, FUNC, LN, ret);
+			return -2;
+		}
+	}
+	memset(csinfo, 0, sizeof(csinfo));
+	int index = 0;
+	for (index = 0; index < 256; index++)
+	{
+		list_head_t *hashlist = &(cfg_iplist[index&ALLMASK]);
+		t_ip_info_list *server = NULL;
+		list_head_t *l;
+		list_for_each_entry_safe_l(server, l, hashlist, hlist)
+		{
+			list_del_init(&(server->hlist));
+			list_del_init(&(server->hotlist));
+			list_del_init(&(server->isplist));
+			list_del_init(&(server->archive_list));
+			list_add(&(server->hlist), &iphome);
+		}
+	}
+	init_cs_isp();
+	if (init_csinfo())
+	{
+		LOG(glogfd, LOG_ERROR, "init_csinfo error %m\n");
+		return -1;
+	}
+	if (init_tracker())
+	{
+		LOG(glogfd, LOG_ERROR, "init_tracker error %m\n");
+		return -1;
+	}
+	if (init_fcs(ISP_FCS))
+	{
+		LOG(glogfd, LOG_ERROR, "init_fcs error %m\n");
+		return -1;
+	}
+	if (init_voss())
+	{
+		LOG(glogfd, LOG_ERROR, "init_voss error %m\n");
+		return -1;
+	}
+	if (pthread_rwlock_unlock(&init_rwmutex))
+	{
+		LOG(glogfd, LOG_ERROR, "ERR %s:%d pthread_rwlock_unlock error %m\n", FUNC, LN);
+		report_err_2_nm(ID, FUNC, LN, ret);
+	}
+	refresh_offline();
+	return 0;
 }
 
 int get_isp_by_name(char *name)
@@ -969,7 +972,6 @@ int vfs_init()
 		LOG(glogfd, LOG_ERROR, "pthread_rwlock_init error %m\n");
 		return -1;
 	}
-	init_cs_isp();
 	if (reload_cfg())
 	{
 		LOG(glogfd, LOG_ERROR, "reload_cfg error %m\n");
@@ -1024,13 +1026,13 @@ int add_ip_info(t_ip_info *ipinfo)
 	{
 		list_head_t *isplist = &(isp_iplist[ipinfo->isp&MAXISP]);
 		list_add(&(server->isplist), isplist);
-		if (ipinfo->archive_isp != UNKNOW_ISP)
+		if (ipinfo->archive_isp != ISP_FCS)
 		{
 			isplist = &(isp_iplist[ipinfo->archive_isp&MAXISP]);
 			list_add(&(server->archive_list), isplist);
 		}
 	}
-	LOG(glogfd, LOG_NORMAL, "%s:%d %s %08X\n", FUNC, LN, ipinfo->sip, server);
+	LOG(glogfd, LOG_NORMAL, "add ip %s %s\n", ipinfo->s_ip, ipinfo->sip);
 	return 0;
 }
 

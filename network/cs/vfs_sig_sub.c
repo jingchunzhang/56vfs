@@ -82,8 +82,9 @@ static void do_voss_sync_file(t_vfs_tasklist *task)
 static void do_voss_sync_dir(t_vfs_tasklist *task)
 {
 	t_task_base *base = (t_task_base*) &(task->task.base);
+	t_task_sub *sub = (t_task_sub*) &(task->task.sub);
 	int d1 = atoi(base->filename);
-	char *p = strchr(base->filename, ',');
+	char *p = strchr(base->filename, '/');
 	if (p == NULL)
 	{
 		LOG(vfs_sig_log_err, LOG_ERROR, "ERROR format %s\n", base->filename);
@@ -102,7 +103,7 @@ static void do_voss_sync_dir(t_vfs_tasklist *task)
 	}
 	memset(vfs_sync, 0, sizeof(t_vfs_sync_list));
 	INIT_LIST_HEAD(&(vfs_sync->list));
-	vfs_sync->sync_task.starttime = base->starttime;
+	vfs_sync->sync_task.starttime = sub->starttime;
 	vfs_sync->sync_task.endtime = time(NULL);
 	vfs_sync->sync_task.d1 = d1;
 	vfs_sync->sync_task.d2 = d2;

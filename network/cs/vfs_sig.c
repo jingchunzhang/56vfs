@@ -291,17 +291,9 @@ void svc_finiconn(int fd)
 	list_del_init(&(peer->cfglist));
 	if (peer->vfs_sync_list)
 	{
-		if (self_ipinfo.archive)
-		{
-			output_tmp_sync_ip(&(peer->vfs_sync_list->sync_task), peer->ip);
-			free(peer->vfs_sync_list);
-		}
-		else
-		{
-			INIT_LIST_HEAD(&(peer->vfs_sync_list->list));
-			list_add_tail(&(peer->vfs_sync_list->list), &sync_list);
-			sync_para.flag = 0;
-		}
+		INIT_LIST_HEAD(&(peer->vfs_sync_list->list));
+		list_add_tail(&(peer->vfs_sync_list->list), &sync_list);
+		sync_para.flag = 0;
 	}
 	memset(curcon->user, 0, sizeof(vfs_cs_peer));
 	free(curcon->user);

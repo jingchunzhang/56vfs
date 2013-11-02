@@ -789,7 +789,7 @@ static int do_syncdir(t_ip_info *ipinfo, uint32_t *fcss, int fcslen)
 		
 		for (j = 0; j < fcslen; j++)
 		{
-			snprintf(tmp, sizeof(tmp), "&%s%u%s=%s|19700101000000", g_config.domain_prefix, fcss[j], g_config.domain_suffix, ipinfo->dirs[i]);
+			snprintf(tmp, sizeof(tmp), "&%s%u.%s=%s|19700101000000", g_config.domain_prefix, fcss[j], g_config.domain_suffix, ipinfo->dirs[i]);
 			if (sizeof(subbuf) - l > strlen(tmp))
 			{
 				strcat(subbuf, tmp);
@@ -813,9 +813,13 @@ static int do_syncdir(t_ip_info *ipinfo, uint32_t *fcss, int fcslen)
 int archive_p(char *url, char *buf, int len)
 {
 	char *query = url;
-	char *p = NULL, *t = NULL;
+	char *p = NULL;
+	char *t = NULL;
+	char *cs_ips = NULL;
 	int l = 0;
 	int archive_isp = 0;
+
+	//get the archive isp num
 	if ((p = strstr(query, "group=")) == NULL)
 	{
 		LOG(vfs_http_log, LOG_ERROR, "err format archive request, must have group param %s\n", query);
@@ -825,11 +829,8 @@ int archive_p(char *url, char *buf, int len)
 	
 	p += 6;
 	if ((t = strchr(p, '&')) != NULL)
-	{
 		*t = '\0';
-	}
 
-	//get the archive isp num
 	archive_isp = get_isp_by_name(p);
 	if (archive_isp == UNKNOW_ISP)
 	{
@@ -838,6 +839,16 @@ int archive_p(char *url, char *buf, int len)
 		return l;
 	}
 	LOG(vfs_http_log, LOG_DEBUG, "%s:%d isp:%s get isp num:%d\n", FUNC, LN, p, archive_isp);
+
+	//get archive cs ip
+	if (t != NULL)
+		*t = '&';
+	if ((cs_ips = strstr(query, "ip=")) != NULL)
+	{
+		cs_ips += 3;
+		if ((t = strchr(cs_ips, '&')) != NULL)
+			*t = '\0';
+	}
 
 	//get archive fcs array
 	uint32_t fcs[MAXFCS] = {0x0};
@@ -867,8 +878,11 @@ int archive_p(char *url, char *buf, int len)
 	{
 		if (server->ipinfo.role == ROLE_CS)
 		{
-			LOG(vfs_http_log, LOG_DEBUG, "%s:%d get archive cs:%s\n", FUNC, LN, server->ipinfo.s_ip);
-			do_syncdir(&(server->ipinfo), fcs, idx);
+			if (cs_ips == NULL || (cs_ips != NULL && strstr(cs_ips, server->ipinfo.s_ip) != NULL))
+			{
+				LOG(vfs_http_log, LOG_DEBUG, "%s:%d get archive cs:%s\n", FUNC, LN, server->ipinfo.s_ip);
+				do_syncdir(&(server->ipinfo), fcs, idx);
+			}
 		}
 	}	
 	release_cfg_lock();

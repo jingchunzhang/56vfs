@@ -68,6 +68,8 @@ typedef struct {
 	uint8_t need_sync; /*TASK_SOURCE：本次任务源头，TASK_DST：本次任务目的之一 */
 	uint8_t sync_dir;  /**/
 	uint8_t isp;      /**/
+	uint8_t archive_isp;      /**/
+	uint8_t bk[3];
 }t_task_sub;
 
 typedef struct {
@@ -87,11 +89,11 @@ typedef struct {
 } t_vfs_tasklist;
 
 typedef struct {
-	time_t exe_abstime;
 	char domain[64];
 	int d1;
 	int d2;
-	int filecount;
+	uint32_t ip;
+	time_t task_stime; /*for time_out */
 	time_t starttime; /*同步开始时间点 对CS来说，填写 目录上次同步的时间戳，对FCS来说，填写 0*/ 
 	time_t endtime; /*同步结束时间点，对CS来说 填写 0，对FCS来说，填写FCS最近一次启动的时间戳 */ 
 	char type;  /*ADDFILE, DELFILE 删除同步，只有CS才会发出请求，FCS不会发出删除同步*/

@@ -1,4 +1,4 @@
-NS=cdc_r
+NS=vfs_master
 CC=gcc
 CXX=g++
 INC+= 
@@ -6,7 +6,7 @@ LIB+= -lpthread -ldl -lrt -rdynamic -L../lib -lvfs -lstdc++ -L../3rdlib -lnmshm
 TARGET=$(NS)
 ALL:$(TARGET)
 
-ifeq ($(NS), cdc_r)
+ifneq ($(NS), vfs_master)
 SUBOBJS=vfs_so_r.o
 CFLAGS+= -g -O2 -pipe -Wall -fno-strict-aliasing -D_GNU_SOURCE -D_REENTRANT -D_NS_=\"$(NS)\" -DVFS_SERVER=1 -I../lib -I../3rdlib
 else

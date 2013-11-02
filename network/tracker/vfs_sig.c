@@ -52,6 +52,8 @@ static int init_cfg_connect(char *sip, vfs_tracker_peer *peer)
 	peer->sock_stat = LOGIN;
 	peer->role = ipinfo->role;
 	peer->isp = ipinfo->isp;
+	peer->archive_isp = ipinfo->archive_isp;
+	peer->real_isp = ipinfo->real_isp;
 	list_add(&(peer->cfglist), &cfg_list[ip&ALLMASK]);
 	return 0;
 }

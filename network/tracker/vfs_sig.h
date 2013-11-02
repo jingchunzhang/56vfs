@@ -40,6 +40,9 @@ typedef struct {
 	uint8_t sock_stat;   /* SOCK_STAT */
 	uint8_t server_stat; /* server stat*/
 	uint8_t isp;
+	uint8_t archive_isp;
+	uint8_t real_isp;
+	uint8_t bk[2];
 } vfs_tracker_peer;
 
 int find_ip_stat(uint32_t ip, vfs_tracker_peer **dpeer);

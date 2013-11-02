@@ -30,7 +30,7 @@ extern time_t vfs_start_time;  /*vfs Æô¶¯Ê±¼ä*/
 
 static char *cmd_type[] = {"M_ONLINE", "M_OFFLINE", "M_GETINFO", "M_SYNCDIR", "M_SYNCFILE", "M_CONFUPDA", "M_SETDIRTIME", "M_GETDIRTIME", "M_DELFILE", "M_EXECUTE"};
 
-static char *validcmd[] = {"cs_preday", "fcs_max_connects", "cs_max_connects", "cs_max_task_run_once", "vfs_test", "real_rm_time", "task_timeout", "fcs_max_task", "cs_sync_dir", "data_calcu_md5", "continue_flag"};
+static char *validcmd[] = {"cs_preday", "fcs_max_connects", "cs_max_connects", "cs_max_task_run_once", "vfs_test", "real_rm_time", "task_timeout", "fcs_max_task", "cs_sync_dir", "data_calcu_md5", "continue_flag", "sync_dir_count"};
 #define validsize sizeof(validcmd)/sizeof(char*)
 
 static int isvalid(char *key)
@@ -307,7 +307,8 @@ int do_voss_sync_dir(char *domain, char *file, time_t starttime)
 	memset(sub, 0, sizeof(t_task_sub));
 	snprintf(base->src_domain, sizeof(base->src_domain), "%s", domain);
 	snprintf(base->filename, sizeof(base->filename), "%s", file);
-	base->starttime = starttime;
+	base->starttime = time(NULL);
+	sub->starttime = starttime;
 	base->type = TASK_SYNCDIR;
 	sub->need_sync = TASK_SYNC_VOSS_FILE;
 	task->task.user = NULL;
@@ -407,7 +408,7 @@ int voss_del_file(StringPairList *pairlist, char *buf, int len)
 
 int voss_sync_dir(StringPairList *pairlist, char *buf, int len)
 {
-	if (self_ipinfo.role == ROLE_TRACKER)
+	if (self_ipinfo.role != ROLE_CS)
 	{
 		LOG(vfs_agent_log, LOG_ERROR, "role [%s] have not %s\n", iprole[self_ipinfo.role], FUNC);
 		return snprintf(buf, len, "role [%s] have not %s\n", iprole[self_ipinfo.role], FUNC);
@@ -445,6 +446,8 @@ int voss_sync_dir(StringPairList *pairlist, char *buf, int len)
 		p++;
 		time_t starttime = get_time_t(p);
 		LOG(vfs_agent_log, LOG_NORMAL, "%s=%s stime=%s:%ld\n", key, val, p, starttime);
+		if (starttime < 0)
+			starttime = 0;
 		if (do_voss_sync_dir(key, val, starttime))
 		{
 			if (ol < len)
