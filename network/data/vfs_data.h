@@ -16,7 +16,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <ctype.h>
-#include <stropts.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <dirent.h>

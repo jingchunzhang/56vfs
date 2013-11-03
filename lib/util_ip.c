@@ -9,7 +9,6 @@
 #include <stdint.h>
 #include <ctype.h>
 #include <sys/socket.h>
-#include <stropts.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <string.h>
