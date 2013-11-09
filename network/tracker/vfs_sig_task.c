@@ -95,7 +95,7 @@ static uint32_t get_a_good_ip(t_cs_dir_info * csinfos, t_vfs_taskinfo *task)
 			mintask = peer->taskcount;
 			continue;
 		}
-		if (peer->taskcount <= mintask)
+		if (peer->taskcount <= mintask && csinfos->ip[i] != task->base.dstip)
 		{
 			ip = csinfos->ip[i];
 			mintask = peer->taskcount;
@@ -150,13 +150,15 @@ int do_dispatch(t_vfs_tasklist *task)
 	LOG(vfs_sig_log, LOG_DEBUG, "%s select %u as source\n", base->filename, ip);
 
 	base->dstip = ip;
+	base->retry++;
 	char obuf[2048] = {0x0};
 	size_t n = 0;
 	peer->hbtime = time(NULL);
 	n = create_sig_msg(NEWTASK_REQ, TASK_START, (t_vfs_sig_body *)base, obuf, sizeof(t_task_base));
 	set_client_data(peer->fd, obuf, n);
 	modify_fd_event(peer->fd, EPOLLOUT);
-	list_add(&(task->userlist), &(peer->tasklist));
+	list_del_init(&(task->userlist));
+	list_add_head(&(task->userlist), &(peer->tasklist));
 	peer->taskcount++;
 	return 0;
 }
@@ -166,6 +168,8 @@ int do_newtask(int fd, t_vfs_sig_head *h, t_vfs_sig_body *b)
 	struct conn *curcon = &acon[fd];
 	vfs_tracker_peer *peer = (vfs_tracker_peer *) curcon->user;
 	t_task_base * base = (t_task_base *)b;
+	base->dstip = 0;
+	base->retry = 0;
 	base->starttime = time(NULL);
 	create_delay_task(TEL, peer->archive_isp, base);
 	create_delay_task(CNC, peer->archive_isp, base);
@@ -211,11 +215,22 @@ int update_task(int fd, t_vfs_sig_head *h, t_vfs_sig_body *b)
 	t_vfs_tasklist *task = NULL;
 	vfs_tracker_peer *peer = NULL;
 
+	peer_cs->taskcount--;
+	if (peer_cs->taskcount < 0)
+		peer_cs->taskcount = 0;
+
 	if (get_task_from_alltask(&task, base, &sub))
 	{
 		LOG(vfs_sig_log_err, LOG_ERROR, "fd[%d] task %s not exist!\n", fd, base->filename);
 		if(get_rsp_peer(&peer, base) == 0)
 			do_rsp(peer, base);
+		return -1;
+	}
+	LOG(vfs_sig_log, LOG_DEBUG, "task %s status [%x] [%d]!\n", base->filename, base->overstatus, task->task.base.retry);
+	if (base->overstatus != OVER_OK && base->overstatus != OVER_E_OPEN_SRCFILE && task->task.base.retry < 2)
+	{
+		vfs_set_task(task, TASK_WAIT);
+		LOG(vfs_sig_log, LOG_DEBUG, "task %s status [%x] try %d be retry!\n", base->filename, base->overstatus, task->task.base.retry);
 		return -1;
 	}
 	if (task->task.user)
@@ -224,11 +239,7 @@ int update_task(int fd, t_vfs_sig_head *h, t_vfs_sig_body *b)
 		set_tmp_blank(tmp->pos, tmp);
 		task->task.user = NULL;
 	}
-	peer_cs->taskcount--;
-	if (peer_cs->taskcount < 0)
-		peer_cs->taskcount = 0;
 	task->task.base.overstatus = base->overstatus;
-	LOG(vfs_sig_log, LOG_DEBUG, "task %s status [%x]!\n", base->filename, base->overstatus);
 
 	if(get_rsp_peer(&peer, base) == 0)
 		do_rsp(peer, base);

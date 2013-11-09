@@ -321,7 +321,7 @@ int myconfig_put_value(const char *pre, const char *key0, const char *val) {
 
 	memcpy(mc->val, val, strlen(val)+1);
 	mc->intval = -1;
-	list_add(&mc->list, hlist);
+	list_add_head(&mc->list, hlist);
 
 	if(!pre)
 		pre = "nopre";
@@ -337,7 +337,7 @@ int myconfig_put_value(const char *pre, const char *key0, const char *val) {
 		return 0;
 	plist->used = 1;
 	strncpy(plist->pre, pre, strlen(pre));
-	list_add(&mc->pre_list, &(plist->list));
+	list_add_head(&mc->pre_list, &(plist->list));
 	return 1;
 }
 char* myconfig_get_value(const char *key) {

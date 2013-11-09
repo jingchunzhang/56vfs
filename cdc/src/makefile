@@ -1,8 +1,8 @@
 CC=gcc
 CXX=g++
-INC+= -I./ -I../inc -I../../lib -I../../3rdlib -I/home/jingchun.zhang/st/mysql/include/mysql
+INC+= -I./ -I../inc -I../../lib -I../../3rdlib -I/usr/include/mysql
 LIB+= -lpthread -ldl -lrt -rdynamic 
-LIB+=-L../lib/ -lcdc -L../../lib -lvfs -L../../3rdlib -lnmshm -L/home/jingchun.zhang/st/mysql/lib/mysql/ -lmysqlclient
+LIB+=-L../lib/ -lcdc -L../../lib -lvfs -L../../3rdlib -lnmshm -L/usr/lib64/mysql/ -lmysqlclient
 
 CFLAGS+= -g -O2 -pipe -Wall -fno-strict-aliasing -D_GNU_SOURCE -D_REENTRANT -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE=1 -D_LARGE_FILES=1 -D_XOPEN_SOURCE=600
 TARGET= cdc cdctool cdc_db cdc_db_tool cdc_redis_tool cdc_db_merge cdc_migrate cdc_migrate_normal cdc_db_del

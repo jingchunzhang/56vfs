@@ -41,7 +41,12 @@
 [iplist]
 	sig_tracker = 113.105.245.83
 	cs_dir = ../csdir
-	fcsfile = ./fcs_list.txt
+
+[csisp]
+	newone = test,7
+	newone = bbtv,8
+	newone = dxt,9
+	newone = archive1,10
 
 [vfs]
 	test = 0
@@ -62,3 +67,6 @@
 [file]
 	allow_suffix = *.flv
 	allow_suffix = *.flv.mp4
+
+[cdc]
+	mysql_db = 0

@@ -26,6 +26,17 @@ static int sub_init_tmp_status(char * tmpfile, off_t size)
 			LOG(glogfd, LOG_ERROR, "open %s err %m\n", tmpfile);
 			return -1;
 		}
+		int i = 0;
+		char b = 0x0;
+		for (; i < size; i++)
+		{
+			if (write(fd, &b, sizeof(b) != sizeof(b)))
+			{
+				LOG(glogfd, LOG_ERROR, "write err %s %d %m\n", tmpfile, fd);
+				close(fd);
+				return -1;
+			}
+		}
 		close(fd);
 	}
 	if (truncate(tmpfile, size))
@@ -151,7 +162,7 @@ int init_load_tmp_status()
 	for (i = 0; i < DEFAULT_ITEMS; i++)
 	{
 		INIT_LIST_HEAD(&(tmpsub->list));
-		list_add(&(tmpsub->list), &hometmp);
+		list_add_head(&(tmpsub->list), &hometmp);
 		tmpsub++;
 	}
 
@@ -163,7 +174,7 @@ int init_load_tmp_status()
 		n = read(fd, &item, sizeof(item));
 		if (n < sizeof(item))
 			break;
-		if (strlen(item.task.base.filename) == 0)
+		if (!exist_tmp || strlen(item.task.base.filename) == 0)
 		{
 			set_tmp_blank(pos, NULL);
 			continue;
@@ -304,7 +315,7 @@ void set_tmp_blank(off_t pos, t_tmp_status *tmp)
 	}
 	tmp->pos = pos;
 	INIT_LIST_HEAD(&(tmp->list));
-	list_add(&(tmp->list), &idletmp);
+	list_add_head(&(tmp->list), &idletmp);
 	LOG(glogfd, LOG_TRACE, "add to idle %ld\n", tmp->pos);
 	return;
 }

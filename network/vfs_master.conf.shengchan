@@ -48,6 +48,7 @@
 	newone = undefine,7
 	newone = bbtv,8
 	newone = dxt,9
+	newone = archive1,10
 
 [vfs]
 	test = 0

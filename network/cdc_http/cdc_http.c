@@ -207,7 +207,7 @@ int svc_init()
 	{
 		INIT_LIST_HEAD(&(ttask->iplist));
 		INIT_LIST_HEAD(&(ttask->tlist));
-		list_add(&(ttask->tlist), &taskhome);
+		list_add_head(&(ttask->tlist), &taskhome);
 		ttask++;
 	}
 	memset(&cdc_path, 0, sizeof(cdc_path));

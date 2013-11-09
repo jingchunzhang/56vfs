@@ -28,7 +28,7 @@ static int init_cfg_connect(char *sip, vfs_voss_peer *peer)
 		peer->role = ipinfo->role;
 	peer->cfgip = ip;
 	peer->sock_stat = LOGIN;
-	list_add(&(peer->cfglist), &cfg_list[ip&ALLMASK]);
+	list_add_head(&(peer->cfglist), &cfg_list[ip&ALLMASK]);
 	return 0;
 }
 

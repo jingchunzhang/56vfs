@@ -60,7 +60,7 @@ struct conn {
 
 #define MAXSIG 20480
 #define MAXCS_ONEGRUOP 1024
-#define MAXDIR_FOR_CS 256
+#define MAXDIR_FOR_CS 1024
 
 #define MAXTRACKER 32
 #define MAXFCS 1024

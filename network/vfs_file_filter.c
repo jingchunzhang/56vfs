@@ -36,7 +36,7 @@ static int add_filter(char *s, int type, list_head_t *mlist)
 	snprintf(filter->strings, sizeof(filter->strings), "%s", s);
 	filter->type = type;
 	filter->s_len = strlen(s);
-	list_add(&(filter->list), mlist);
+	list_add_head(&(filter->list), mlist);
 	LOG(glogfd, LOG_DEBUG, "add file filter %s\n", s);
 	return 0;
 }

@@ -277,7 +277,7 @@ static void pushcs(t_cs_dir_info *cs, char *sip, uint8_t isp, uint8_t archive_is
 			t_ip_info_list *server = (t_ip_info_list *) (ipinfo0 - offsetof(t_ip_info_list, ipinfo));
 			list_del_init(&(server->archive_list));
 			list_head_t *isplist = &(isp_iplist[archive_isp&MAXISP]);
-			list_add(&(server->archive_list), isplist);
+			list_add_head(&(server->archive_list), isplist);
 			ipinfo0->archive_isp = archive_isp;
 		}
 		char dirs[8] = {0x0};
@@ -394,7 +394,7 @@ static int process_csfile_hot(char *csfile)
 			t_ip_info_list *t_ip_list =  (t_ip_info_list *) ((char *) (ipinfo0) - offsetof(t_ip_info_list, ipinfo));
 			list_del_init (&(t_ip_list->hotlist));
 			LOG(glogfd, LOG_NORMAL, "ip %s add int hot %s\n", buf, ispname[ipinfo0->isp]);
-			list_add(&(t_ip_list->hotlist), &hothome);
+			list_add_head(&(t_ip_list->hotlist), &hothome);
 		}
 		else
 			LOG(glogfd, LOG_ERROR, "ip %s not in new_cs*.txt\n", buf);
@@ -565,9 +565,9 @@ static int init_fcs(uint8_t isp)
 		fcslist[atoi(ipinfo.sip+3)%MAXFCS] = isp;
 		ipinfo.ip = ip;
 		add_ip_info(&ipinfo);
+		LOG(glogfd, LOG_NORMAL, "ip %s %s\n", ipinfo.sip, ipinfo.s_ip);
 	}
 	fclose(fp);
-	LOG(glogfd, LOG_NORMAL, "ip %s %s\n", ipinfo.sip, ipinfo.s_ip);
 	return 0;
 }
 
@@ -783,7 +783,7 @@ void oper_ip_off_line(uint32_t ip, int type)
 		{
 			server->ip = ip;
 			INIT_LIST_HEAD(&(server->hlist));
-			list_add(&(server->hlist), &offlinehome);
+			list_add_head(&(server->hlist), &offlinehome);
 		}
 	}
 	if (pthread_rwlock_unlock(&offline_rwmutex))
@@ -854,7 +854,7 @@ int reload_cfg()
 			list_del_init(&(server->hotlist));
 			list_del_init(&(server->isplist));
 			list_del_init(&(server->archive_list));
-			list_add(&(server->hlist), &iphome);
+			list_add_head(&(server->hlist), &iphome);
 		}
 	}
 	init_cs_isp();
@@ -951,7 +951,7 @@ int vfs_init()
 		INIT_LIST_HEAD(&(ipall->hotlist));
 		INIT_LIST_HEAD(&(ipall->isplist));
 		INIT_LIST_HEAD(&(ipall->archive_list));
-		list_add(&(ipall->hlist), &iphome);
+		list_add_head(&(ipall->hlist), &iphome);
 		ipall++;
 	}
 
@@ -985,7 +985,7 @@ int add_ip_info(t_ip_info *ipinfo)
 	t_ip_info *ipinfo0;
 	if (get_ip_info(&ipinfo0, ipinfo->sip, 0) == 0)
 	{
-		LOG(glogfd, LOG_TRACE, "exist ip %s\n", ipinfo->sip);
+		LOG(glogfd, LOG_ERROR, "exist ip %s\n", ipinfo->sip);
 		return 0;
 	}
 	if (check_self_ip(ipinfo->ip) == 0)
@@ -1021,15 +1021,15 @@ int add_ip_info(t_ip_info *ipinfo)
 	INIT_LIST_HEAD(&(server->isplist));
 	INIT_LIST_HEAD(&(server->archive_list));
 	memcpy(&(server->ipinfo), ipinfo, sizeof(t_ip_info));
-	list_add(&(server->hlist), hashlist);
+	list_add_head(&(server->hlist), hashlist);
 	if (ipinfo->role == ROLE_CS)
 	{
 		list_head_t *isplist = &(isp_iplist[ipinfo->isp&MAXISP]);
-		list_add(&(server->isplist), isplist);
+		list_add_head(&(server->isplist), isplist);
 		if (ipinfo->archive_isp != ISP_FCS)
 		{
 			isplist = &(isp_iplist[ipinfo->archive_isp&MAXISP]);
-			list_add(&(server->archive_list), isplist);
+			list_add_head(&(server->archive_list), isplist);
 		}
 	}
 	LOG(glogfd, LOG_NORMAL, "add ip %s %s\n", ipinfo->s_ip, ipinfo->sip);
@@ -1056,6 +1056,7 @@ int get_ip_info_by_uint(t_ip_info **ipinfo, uint32_t ip, int type, char *s_ip, c
 			else
 				memcpy(*ipinfo, &(server->ipinfo), sizeof(t_ip_info));
 			ret = 0;
+			break;
 		}
 	}
 	if (type)

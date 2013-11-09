@@ -40,6 +40,7 @@ int do_newtask(int fd, t_vfs_sig_head *h, t_vfs_sig_body *b)
 	t_task_base *base = (t_task_base*) b;
 	base->starttime = time(NULL);
 	base->dstip = str2ip(self_ipinfo.sip);
+	base->retry = 0;
 	base->offsize = 0;
 	dump_task_info ((char *) FUNC, LN, (t_task_base *)b);
 	struct conn *curcon = &acon[fd];
@@ -57,6 +58,9 @@ int do_newtask(int fd, t_vfs_sig_head *h, t_vfs_sig_body *b)
 		t_ip_info *ipinfo = &ipinfo0;
 		if (get_ip_info(&ipinfo, base->src_domain, 1))
 		{
+			char val[256] = {0x0};
+			snprintf(val, sizeof(val), "get_ip_info %s err %m\n", base->src_domain);
+			SetStr(VFS_GET_IP_ERR, val);
 			LOG(vfs_sig_log_err, LOG_ERROR, "get_ip_info %s err %m\n", base->src_domain);
 			h->status = TASK_FAILED;
 			return -1;
@@ -224,7 +228,6 @@ int sync_task_2_group(t_vfs_tasklist *task)
 	{
 		if (self_ipinfo.archive)
 		{
-			LOG(vfs_sig_log, LOG_NORMAL, "ip[%u] %u %u %u %u!\n", csinfo->ip[i], csinfo->real_isp[i], csinfo->archive_isp[i], self_ipinfo.real_isp, self_ipinfo.archive_isp);
 			if (csinfo->real_isp[i] != self_ipinfo.real_isp || csinfo->archive_isp[i] != self_ipinfo.archive_isp)
 				continue;
 		}

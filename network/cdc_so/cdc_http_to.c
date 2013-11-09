@@ -25,7 +25,7 @@ void add_2_active(t_r_peer *peer)
 	list_head_t *alllist = allto + syscall(SYS_gettid)%threadcount;
 	INIT_LIST_HEAD(&(peer->alist));
 	peer->last = time(NULL);
-	list_add(&(peer->alist), alllist);
+	list_add_head(&(peer->alist), alllist);
 }
 
 int init_p_to()

@@ -43,7 +43,7 @@ static int init_check_dup()
 	{
 		INIT_LIST_HEAD(&(ip->hlist));
 		INIT_LIST_HEAD(&(ip->tlist));
-		list_add(&(ip->hlist), &dupusehome);
+		list_add_head(&(ip->hlist), &dupusehome);
 		ip++;
 	}
 	return 0;
@@ -66,7 +66,7 @@ static int add_dup_task(char *ip, char *domain, char *fname)
 		duptask->h3 = h3;
 		duptask->t = time(NULL);
 
-		list_add(&(duptask->hlist), hashlist);
+		list_add_head(&(duptask->hlist), hashlist);
 		list_add_tail(&(duptask->tlist), &dupusetime);
 		return 0;
 	}
@@ -105,7 +105,7 @@ static void clear_dup_expire()
 		{
 			list_del_init(&(duptask->hlist));
 			list_del_init(&(duptask->tlist));
-			list_add(&(duptask->hlist), &dupusehome);
+			list_add_head(&(duptask->hlist), &dupusehome);
 		}
 		else
 			return;

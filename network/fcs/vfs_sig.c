@@ -81,9 +81,9 @@ static int init_cfg_connect(char *sip, vfs_fcs_peer *peer)
 	if (peer->role == ROLE_TRACKER)
 	{
 		list_del_init(&(peer->tlist));
-		list_add(&(peer->tlist), &trackerlist);
+		list_add_head(&(peer->tlist), &trackerlist);
 	}
-	list_add(&(peer->cfglist), &cfg_list[ip&ALLMASK]);
+	list_add_head(&(peer->cfglist), &cfg_list[ip&ALLMASK]);
 	return 0;
 }
 
@@ -180,7 +180,7 @@ int svc_initconn(int fd)
 	INIT_LIST_HEAD(&(peer->cfglist));
 	INIT_LIST_HEAD(&(peer->tasklist));
 	list_move_tail(&(peer->alist), &activelist);
-	list_add(&(peer->hlist), &online_list[ip&ALLMASK]);
+	list_add_head(&(peer->hlist), &online_list[ip&ALLMASK]);
 	LOG(vfs_sig_log, LOG_DEBUG, "a new fd[%d] init ok!\n", fd);
 	return 0;
 }
@@ -267,6 +267,13 @@ void svc_timeout()
 	init_sync_list();
 	do_active_sync();
 	scan_sync_dir_list();
+
+	static time_t last_scan_timeout = 0;
+	if ( now - last_scan_timeout > 1800)
+	{
+		last_scan_timeout = now;
+		do_timeout_task();
+	}
 }
 
 static void refresh_tracker_task(list_head_t *mlist)

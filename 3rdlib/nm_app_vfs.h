@@ -17,6 +17,7 @@
 #define VFS_TASK_MUTEX_ERR NM_STR_VFS_BASE+7  /*用于框架同步报错*/
 #define VFS_START_ERR NM_STR_VFS_BASE+8  /*VFS Start ERROR*/
 #define VFS_UNTRUST_IP NM_STR_VFS_BASE+9  /*VOSS untrust ip try push file*/
+#define VFS_GET_IP_ERR NM_STR_VFS_BASE+10  /*cs get ip err*/
 
 #define VFS_INT_TASK_ALL NM_INT_VFS_BASE+1  /*当前机器所有任务数*/
 #define VFS_INC_TASK_OVER NM_INT_VFS_BASE+2 /*已完成任务数*/

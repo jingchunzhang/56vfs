@@ -82,14 +82,8 @@ void get_data_from_task(t_vfs_tasklist *task)
 
 static void do_scan(struct conn *curcon, int *outdata, int type)
 {
-	int i = 0;
 	LOG(vfs_agent_log, LOG_DEBUG, "task_timeout = %ld\n", g_config.task_timeout);
-	for (i = TASK_DELAY ; i < TASK_HOME; i++)
-	{
-		if (i == TASK_DELAY && self_ipinfo.role != ROLE_CS)
-			continue;
-		scan_some_status_task(i, get_data_from_task);
-	}
+	scan_some_status_task(TASK_CLEAN, get_data_from_task);
 	if (self_ipinfo.role == ROLE_CS)
 		scan_some_status_task(TASK_SYNC_VOSS, get_data_from_task);
 

@@ -442,7 +442,7 @@ static void do_active_sync()
 	if (flag == 3)
 	{
 		LOG(vfs_sig_log, LOG_DEBUG, "ip[%u] stat is UNKOWN_STAT !\n", spec_ip);
-		list_add(&(vfs_sync->list), &sync_list);
+		list_add_head(&(vfs_sync->list), &sync_list);
 		return;
 	}
 	if (flag != 2)
@@ -450,7 +450,7 @@ static void do_active_sync()
 		if (is_first_ip == 0)
 		{
 			LOG(vfs_sig_log, LOG_DEBUG, "all ip is wait for vfs_sync!\n");
-			list_add(&(vfs_sync->list), &sync_list);
+			list_add_head(&(vfs_sync->list), &sync_list);
 			return;
 		}
 		LOG(vfs_sig_log, LOG_DEBUG, "no cs ready for vfs_sync, but i am only or first_ip!\n");
@@ -523,7 +523,7 @@ static int init_sync_list()
 			vfs_sync->sync_task.type = TASK_ADDFILE;
 			snprintf(vfs_sync->sync_task.domain, sizeof(vfs_sync->sync_task.domain), "fcs%d.56.com", domain);
 			LOG(vfs_sig_log, LOG_NORMAL, "gen sync task %d %d %s %ld %s\n", d1, d2, vfs_sync->sync_task.domain, last, ctime(&last));
-			list_add(&(vfs_sync->list), &sync_list);
+			list_add_head(&(vfs_sync->list), &sync_list);
 		}
 	}
 
@@ -548,7 +548,7 @@ static int init_sync_list()
 		vfs_sync->sync_task.type = TASK_DELFILE;
 		snprintf(vfs_sync->sync_task.domain, sizeof(vfs_sync->sync_task.domain), "fcs%d.56.com", domain);
 		LOG(vfs_sig_log, LOG_NORMAL, "gen sync task %s %s\n", vfs_sync->sync_task.domain, ctime(&maxtime));
-		list_add(&(vfs_sync->list), &sync_list);
+		list_add_head(&(vfs_sync->list), &sync_list);
 	}
 	return 0;
 }

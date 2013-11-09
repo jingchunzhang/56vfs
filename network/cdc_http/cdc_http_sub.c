@@ -89,9 +89,9 @@ static int add_new_task(int type, char rec[][256], int role, char *sip)
 		strcpy(task->dstip, sip);
 	}
 	hashlist = &(iplist[ip&0xFF]); 
-	list_add(&(task->iplist), hashlist);
+	list_add_head(&(task->iplist), hashlist);
 	hashlist = &(tasklist[r5hash(task->file)&0xFF]);
-	list_add(&(task->tlist), hashlist);
+	list_add_head(&(task->tlist), hashlist);
 	LOG(vfs_http_log, LOG_NORMAL, "add new task ip %s %s %s\n", task->srcip, task->dstip, task->file); 
 	return 0;
 }
@@ -273,7 +273,7 @@ void refresh_run_task()
 		{
 			list_del_init(&(task->tlist));
 			list_del_init(&(task->iplist));
-			list_add(&(task->tlist), &taskhome);
+			list_add_head(&(task->tlist), &taskhome);
 		}
 	}
 	do_refresh_run_task();

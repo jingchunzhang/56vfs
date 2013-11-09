@@ -241,10 +241,7 @@ static void check_task()
 		}
 		ret = vfs_get_task(&tasklist, TASK_WAIT_SYNC);
 		if(ret != GET_TASK_OK)
-		{
-			LOG(vfs_sig_log, LOG_DEBUG, "not wait task to handle!\n");
 			return;
-		}
 		t_task_base *task = &(tasklist->task.base);
 		t_task_sub *sub = &(tasklist->task.sub);
 		if (check_task_from_alltask(task, sub) == 0)
@@ -294,15 +291,11 @@ static void check_task()
 			//移动当前节点到运行队列
 			vfs_set_task(tasklist, TASK_RUN);
 			add_task_to_alltask(tasklist);
-			list_add(&(tasklist->userlist), &(peer->tasklist));
+			list_add_head(&(tasklist->userlist), &(peer->tasklist));
 			peer->taskcount++;
 		}
 		else
-		{
-			//没有连接可以处理任务，移回等待列表
 			vfs_set_task(tasklist, TASK_WAIT_SYNC_IP);
-			LOG(vfs_sig_log, LOG_DEBUG, "no active link to handle task! remove task to wait task queue!\n");
-		}
 	}
 }
 
@@ -355,7 +348,7 @@ static void do_active_sync()
 	if (get_cs_info(d1, d2, &cs))
 	{
 		LOG(vfs_sig_log, LOG_ERROR, "get %d %d get_cs_info err!\n", d1, d2);
-		list_add(&(vfs_sync->list), &sync_list);
+		list_add_head(&(vfs_sync->list), &sync_list);
 		return;
 	}
 	vfs_fcs_peer *peer = NULL;
@@ -372,7 +365,7 @@ static void do_active_sync()
 		do_sub_sync(vfs_sync, peer);
 	}
 	if (get == 0)
-		list_add(&(vfs_sync->list), &sync_list);
+		list_add_head(&(vfs_sync->list), &sync_list);
 	else
 		free(vfs_sync);
 }
@@ -394,7 +387,7 @@ static int add_2_sync_list(int d1, int d2)
 	vfs_sync->sync_task.type = TASK_ADDFILE;
 	snprintf(vfs_sync->sync_task.domain, sizeof(vfs_sync->sync_task.domain), "%s", hostname);
 	LOG(vfs_sig_log, LOG_NORMAL, "gen sync task %d %d %s %ld %s\n", d1, d2, vfs_sync->sync_task.domain, fcs_start_time, ctime(&fcs_start_time));
-	list_add(&(vfs_sync->list), &sync_list);
+	list_add_head(&(vfs_sync->list), &sync_list);
 	set_fcs_time_stamp_by_int(d1, d2, time(NULL));
 	return 0;
 }
@@ -608,7 +601,6 @@ static void do_sub_old_task(d1, d2)
 	}
 	if (oval == 0)
 		oval = get_fcs_dir_lasttime(d1, d2) + 1 ;
-	LOG(vfs_sig_log, LOG_NORMAL, "get %d %d time_stamp %s", d1, d2, ctime(&oval));
 
 	char *datadir = myconfig_get_value("vfs_fcs_datadir");
 	if (datadir == NULL)

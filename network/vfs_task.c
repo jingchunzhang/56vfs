@@ -147,7 +147,7 @@ int init_task_info()
 		INIT_LIST_HEAD(&(taskall->llist));
 		INIT_LIST_HEAD(&(taskall->hlist));
 		INIT_LIST_HEAD(&(taskall->userlist));
-		list_add(&(taskall->llist), &vfstask[TASK_HOME]);
+		list_add_head(&(taskall->llist), &vfstask[TASK_HOME]);
 		taskall->status = TASK_HOME;
 		taskall++;
 	}
@@ -177,7 +177,6 @@ static int get_vfs_task_hash(t_task_base *base, t_task_sub *sub)
 		snprintf(buf, sizeof(buf), "%s|%s|%d|", base->filename, base->src_domain, base->type);
 	else if (self_ipinfo.role == ROLE_TRACKER)
 		snprintf(buf, sizeof(buf), "%s|%s|%d|%u|", base->filename, base->src_domain, base->type, sub->isp);
-	LOG(glogfd, LOG_NORMAL, "%s:%d %s\n", FUNC, LN, buf);
 	return r5hash(buf);
 }
 
@@ -201,7 +200,7 @@ int add_task_to_alltask(t_vfs_tasklist *task)
 
 	list_del_init(&(task->hlist));  /*avoid re add */
 
-	list_add(&(task->hlist), &alltask[index]);
+	list_add_head(&(task->hlist), &alltask[index]);
 	if (pthread_mutex_unlock(&TASK_ALL))
 		LOG(glogfd, LOG_ERROR, "ERR %s:%d pthread_mutex_unlock error %m\n", FUNC, LN);
 	return 0;

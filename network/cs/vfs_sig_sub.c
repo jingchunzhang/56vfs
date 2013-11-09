@@ -110,7 +110,7 @@ static void do_voss_sync_dir(t_vfs_tasklist *task)
 	vfs_sync->sync_task.type = TASK_ADDFILE;
 	snprintf(vfs_sync->sync_task.domain, sizeof(vfs_sync->sync_task.domain), "%s", base->src_domain);
 	LOG(vfs_sig_log, LOG_NORMAL, "gen sync task %d %d %s %s\n", d1, d2, vfs_sync->sync_task.domain, ctime(&base->starttime));
-	list_add(&(vfs_sync->list), &sync_list);
+	list_add_head(&(vfs_sync->list), &sync_list);
 	base->overstatus = OVER_OK;
 	self_stat = WAIT_SYNC;
 	sync_para.flag = 0;
@@ -275,10 +275,7 @@ static void check_task()
 		ret = vfs_get_task(&task, TASK_DELAY);
 		if (ret != GET_TASK_OK)
 			break;
-		if (task->task.base.overstatus == TASK_EXIST)
-			vfs_set_task(task, TASK_WAIT);
-		else
-			vfs_set_task(task, TASK_FIN);
+		vfs_set_task(task, TASK_FIN);
 	}
 
 	int once = 0;

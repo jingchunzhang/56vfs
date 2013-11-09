@@ -135,7 +135,7 @@ int svc_initconn(int fd)
 	INIT_LIST_HEAD(&(peer->hlist));
 	INIT_LIST_HEAD(&(peer->cfglist));
 	list_move_tail(&(peer->alist), &activelist);
-	list_add(&(peer->hlist), &online_list[ip&ALLMASK]);
+	list_add_head(&(peer->hlist), &online_list[ip&ALLMASK]);
 	LOG(vfs_voss_log, LOG_TRACE, "a new fd[%d] init ok!\n", fd);
 	return 0;
 }

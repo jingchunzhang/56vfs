@@ -35,7 +35,7 @@ int delay_task_init()
 	for (i = 0; i < default_max; i++)
 	{
 		INIT_LIST_HEAD(&(timer_all->tlist));
-		list_add(&(timer_all->tlist), &delay_home);
+		list_add_head(&(timer_all->tlist), &delay_home);
 		timer_all++;
 	}
 	return 0;
@@ -76,7 +76,7 @@ int add_to_delay_task(t_vfs_timer *vfs_timer)
 		vfs_timer->next_time = cur + vfs_timer->span_time;   /*avoid time no sync*/
 		memcpy(&(timer->vfs_timer), vfs_timer, sizeof(t_vfs_timer));
 		LOG(glogfd, LOG_DEBUG, "args [%s] add into delay [%d] [%ld] [%ld]\n", timer->vfs_timer.args, timer->vfs_timer.span_time, timer->vfs_timer.next_time, cur);
-		list_add(&(timer->tlist), &delay_active);
+		list_add_head(&(timer->tlist), &delay_active);
 	}
 	if (pthread_mutex_unlock(&delay_mutex))
 		LOG(glogfd, LOG_ERROR, "ERR %s:%d pthread_mutex_unlock error %m\n", FUNC, LN);
@@ -114,7 +114,7 @@ void scan_delay_task()
 				continue;
 			}
 			list_del_init(&(timer->tlist));
-			list_add(&(timer->tlist), &delay_home);
+			list_add_head(&(timer->tlist), &delay_home);
 		}
 	}
 	if (pthread_mutex_unlock(&delay_mutex))

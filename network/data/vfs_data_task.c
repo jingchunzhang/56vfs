@@ -67,7 +67,7 @@ int do_recv_task(int fd, t_vfs_sig_head *h, t_task_base *base)
 		if (peer->recvtask)
 		{
 			base0->overstatus = OVER_E_OPEN_DSTFILE;
-			vfs_set_task(peer->recvtask, TASK_CLEAN);
+			vfs_set_task(peer->recvtask, TASK_FIN);
 			peer->recvtask = NULL;
 		}
 		return RECV_CLOSE;

@@ -56,7 +56,7 @@ static int init_select_ip()
 	{
 		INIT_LIST_HEAD(&(ip->hlist));
 		INIT_LIST_HEAD(&(ip->tlist));
-		list_add(&(ip->hlist), &ipusehome);
+		list_add_head(&(ip->hlist), &ipusehome);
 		ip++;
 	}
 	return 0;
@@ -104,7 +104,7 @@ static int add_select_ip(uint32_t ip)
 	list_head_t *hlist = &(ip_use[ip & 0xFF]);
 	useip->ip = ip;
 	useip->t = time(NULL);
-	list_add(&(useip->hlist), hlist);
+	list_add_head(&(useip->hlist), hlist);
 	list_add_tail(&(useip->tlist), &ipusetime);
 
 	t_use_ip * use_ip = used_ip[ip & 0x1F];
@@ -185,7 +185,7 @@ static void clear_expire()
 		{
 			list_del_init(&(duptask->hlist));
 			list_del_init(&(duptask->tlist));
-			list_add(&(duptask->hlist), &ipusehome);
+			list_add_head(&(duptask->hlist), &ipusehome);
 			get_ip_user_count(duptask->ip, 1);
 		}
 		else

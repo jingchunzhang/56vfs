@@ -54,7 +54,7 @@ static int init_cfg_connect(char *sip, vfs_tracker_peer *peer)
 	peer->isp = ipinfo->isp;
 	peer->archive_isp = ipinfo->archive_isp;
 	peer->real_isp = ipinfo->real_isp;
-	list_add(&(peer->cfglist), &cfg_list[ip&ALLMASK]);
+	list_add_head(&(peer->cfglist), &cfg_list[ip&ALLMASK]);
 	return 0;
 }
 
@@ -125,7 +125,7 @@ int svc_initconn(int fd)
 	INIT_LIST_HEAD(&(peer->cfglist));
 	INIT_LIST_HEAD(&(peer->tasklist));
 	list_move_tail(&(peer->alist), &activelist);
-	list_add(&(peer->hlist), &online_list[ip&ALLMASK]);
+	list_add_head(&(peer->hlist), &online_list[ip&ALLMASK]);
 	LOG(vfs_sig_log, LOG_TRACE, "a new fd[%d] init ok!\n", fd);
 	return 0;
 }
