@@ -149,8 +149,8 @@ void do_close(int fd)
 		if (solib.svc_finiconn)
 			solib.svc_finiconn(fd);
 		epoll_del(epfd, fd);
-		close(fd);
 		curconn->fd = -1;
+		close(fd);
 	}
 }
 

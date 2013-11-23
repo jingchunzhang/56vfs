@@ -10,7 +10,8 @@
 static MYSQL  mysql0;
 static MYSQL * mysql = &mysql0;
 static const char *sql_prefix = "CREATE TABLE if not exists ";
-static const char *sql_suffix[] = {"( ip varchar(16) not null, domain varchar(16) not null, fname varchar(256) not null, task_type varchar(2)not null, task_stime varchar(16) not null, fmd5 varchar(34) , fsize bigint , over_status varchar(16), task_ctime varchar(16) , role varchar(2), process_time varchar(16), PRIMARY KEY (ip, domain, fname, task_type, task_stime) ) ENGINE=innodb DEFAULT CHARSET=latin1;", "(ip varchar(16) not null, day varchar(10), total int, success int, fail int, process_time varchar(16), PRIMARY KEY (ip, day)) ENGINE=innodb DEFAULT CHARSET=latin1;", "(day varchar(10), total int, success int, fail int, process_time varchar(16), PRIMARY KEY (ip, day)) ENGINE=innodb DEFAULT CHARSET=latin1;", "(ip varchar(16) not null, ctime varchar(16), report_status varchar(16), run_status varchar(2), sctime varchar(16), PRIMARY KEY (ip)) ENGINE=innodb DEFAULT CHARSET=latin1;"};
+//static const char *sql_suffix[] = {"( ip varchar(16) not null, domain varchar(16) not null, fname varchar(256) not null, task_type varchar(2)not null, task_stime varchar(16) not null, fmd5 varchar(34) , fsize bigint , over_status varchar(16), task_ctime varchar(16) , role varchar(2), process_time varchar(16), PRIMARY KEY (ip, domain, fname, task_type, task_stime) ) ENGINE=innodb DEFAULT CHARSET=latin1;", "(ip varchar(16) not null, day varchar(10), total int, success int, fail int, process_time varchar(16), PRIMARY KEY (ip, day)) ENGINE=innodb DEFAULT CHARSET=latin1;", "(day varchar(10), total int, success int, fail int, process_time varchar(16), PRIMARY KEY (ip, day)) ENGINE=innodb DEFAULT CHARSET=latin1;", "(ip varchar(16) not null, ctime varchar(16), report_status varchar(16), run_status varchar(2), sctime varchar(16), PRIMARY KEY (ip)) ENGINE=innodb DEFAULT CHARSET=latin1;"};
+static const char *sql_suffix[] = {"( id bigint(20) NOT NULL AUTO_INCREMENT, ip varchar(16) not null, domain varchar(16) not null, fname varchar(256) not null, task_type varchar(2)not null, task_stime varchar(16) not null, fmd5 varchar(34) , fsize bigint , over_status varchar(16), task_ctime varchar(16) , role varchar(2), process_time varchar(16), PRIMARY KEY (id) ) ENGINE=innodb AUTO_INCREMENT=1280000 DEFAULT CHARSET=latin1;", "(ip varchar(16) not null, day varchar(10), total int, success int, fail int, process_time varchar(16), PRIMARY KEY (ip, day)) ENGINE=innodb DEFAULT CHARSET=latin1;", "(day varchar(10), total int, success int, fail int, process_time varchar(16), PRIMARY KEY (ip, day)) ENGINE=innodb DEFAULT CHARSET=latin1;", "(ip varchar(16) not null, ctime varchar(16), report_status varchar(16), run_status varchar(2), sctime varchar(16), PRIMARY KEY (ip)) ENGINE=innodb DEFAULT CHARSET=latin1;"};
 extern int cdc_db_log ;
 
 static int connect_db(t_db_info *db)
@@ -118,6 +119,8 @@ int mydb_commit()
 
 static inline void get_voss_tablename(char *ip, char *stime, char *fname, char *tablename, int len, int role)
 {
+	snprintf(tablename, len, "t_ip_task_info_%.8s", stime);
+	return;
 	char curtime[16] = {0x0};
 	get_strtime(curtime);
 	if(!strncmp(curtime, stime, 8))
@@ -188,20 +191,11 @@ int get_last_status(t_voss_key *k, t_voss_val *v, char *table)
 
 int mydb_update_voss(t_voss_key *k, t_voss_val *v, char *table, int type)
 {
-	/*
-	t_voss_val v0;
-	memset(&v0, 0, sizeof(v0));
-	if (get_last_status(k, &v0, table) == 0)
-	{
-		if (strcmp(v0.over_status, "OVER_OK") == 0)
-			return 0;
-	}
-	*/
 	char sql[1024] = {0x0};
 	char stime[16] = {0x0};
 	get_strtime(stime);
 	char *prop = "ip, domain, fname, task_type, task_stime, fmd5, fsize, over_status, task_ctime, role, process_time";
-	snprintf(sql, sizeof(sql), "replace into %s (%s) values ('%s', '%s', '%s', '%s', '%s', '%s', %lu, '%s', '%s', '%s', '%s')", table, prop, k->ip, k->domain, k->fname, k->task_type, k->task_stime, v->fmd5, v->fsize, v->over_status, v->task_ctime, v->role, stime); 
+	snprintf(sql, sizeof(sql), "insert into %s (%s) values ('%s', '%s', '%s', '%s', '%s', '%s', %lu, '%s', '%s', '%s', '%s')", table, prop, k->ip, k->domain, k->fname, k->task_type, k->task_stime, v->fmd5, v->fsize, v->over_status, v->task_ctime, v->role, stime); 
 	
 	LOG(cdc_db_log, LOG_DEBUG, "REPLACE SQL[%s]\n", sql);
     if (mysql_query(mysql, sql))

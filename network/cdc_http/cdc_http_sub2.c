@@ -4,6 +4,8 @@
 * 56VFS may be copied only under the terms of the GNU General Public License V3
 */
 
+#define MONTH_SECOND 2592000
+
 static void add_a_valid_ip(uint32_t tip, uint32_t ip[MAX_IP_IN_DIR])
 {
 	int i = 0; 
@@ -194,6 +196,7 @@ static int get_isp_ips_uint(uint8_t isp, uint32_t *ips, uint8_t type)
 
 static int check_self_in_shm(char *s, t_ip_isp *isps, char *f, char *d)
 {
+	return -1;
 	int i = 0;
 	for (i = 0; i < MAX_IP_IN_DIR; i++)
 	{
@@ -438,6 +441,23 @@ int hotfile_p(char *url, char *buf, int len)
 	return l;
 }
 
+static int check_rtime_shm(char *domain, char *f)
+{
+	char t[256] = {0x0};
+	snprintf(t, sizeof(t), "%s:%s", domain, f);
+	t_cdc_data *d;
+	if (find_cdc_node(t, &d))
+		return 0;
+	t_cdc_val *v = &(d->v);
+	time_t ntime = time(NULL) - MONTH_SECOND;
+	if (ntime <= vfs_max(vfs_max(v->fmtime, v->frtime), v->fctime))
+	{
+		LOG(vfs_http_log, LOG_ERROR, "file %s rtime check!\n", t);
+		return -1;
+	}
+	return 0;
+}
+
 static void del_from_shm_ip(char *domain, char *f, uint32_t ip)
 {
 	char t[256] = {0x0};
@@ -628,6 +648,11 @@ int delfile_p(char *url, char *buf, int len)
 	LOG(vfs_http_log, LOG_NORMAL, "delete type %d %s\n", isp, p);
 	char fname[256] = {0x0};
 	snprintf(fname, sizeof(fname), "%s/%s", hotfile_prefix, p);
+	if (check_rtime_shm(domain, fname))
+	{
+		l += snprintf(buf+l, len -l , "file %s update in this month\n", fname);
+		return l;
+	}
 
 	t_cs_dir_info cs;
 	memset(&cs, 0, sizeof(cs));

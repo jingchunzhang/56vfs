@@ -1,4 +1,4 @@
-NS=vfs_master
+NS=cdc_master
 CC=gcc
 CXX=g++
 INC+= 

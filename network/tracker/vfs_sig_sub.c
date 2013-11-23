@@ -5,19 +5,6 @@
 */
 
 #include "c_api.h"
-
-static int check_login(uint8_t sock_stat, int fd)
-{
-	if (sock_stat <= CONNECTED)
-	{
-		struct conn *curcon = &acon[fd];
-		vfs_tracker_peer *peer = (vfs_tracker_peer *) curcon->user;
-		LOG(vfs_sig_log_err, LOG_ERROR, "fd[%d] %s err [%u]!\n", fd, FUNC, peer->ip);
-		return -1;
-	}
-	return 0;
-}
-
 void check_task()
 {
 	t_vfs_tasklist *task = NULL;
@@ -91,9 +78,6 @@ static int do_req(int fd, t_vfs_sig_head *h, t_vfs_sig_body *b)
 	switch(h->cmdid)
 	{
 		case HEARTBEAT_REQ:
-			if (check_login(peer->sock_stat, fd))
-				return RECV_ADD_EPOLLIN;
-
 			if (h->status != HB_C_2_T && HB_T_2_T != h->status)
 			{
 				LOG(vfs_sig_log_err, LOG_ERROR, "fd[%d] recv a bad hb status[%x]!\n", fd, h->status);
@@ -110,8 +94,6 @@ static int do_req(int fd, t_vfs_sig_head *h, t_vfs_sig_body *b)
 			return RECV_ADD_EPOLLOUT;
 
 		case HEARTBEAT_RSP:
-			if (check_login(peer->sock_stat, fd))
-				return RECV_ADD_EPOLLIN;
 			peer->sock_stat = IDLE;
 			if (h->bodylen != 1)
 				LOG(vfs_sig_log_err, LOG_ERROR, "fd[%d] recv a bad hb rsp, no SERVER_STAT\n", fd);
@@ -145,8 +127,6 @@ static int do_req(int fd, t_vfs_sig_head *h, t_vfs_sig_body *b)
 			return RECV_ADD_EPOLLIN;
 
 		case TASKINFO_REQ:
-			if (check_login(peer->sock_stat, fd))
-				return RECV_ADD_EPOLLIN;
 			if (h->status != TASKINFO_C_2_T)
 			{
 				LOG(vfs_sig_log_err, LOG_ERROR, "fd[%d] recv a bad TASKINFO_REQ status[%x]!\n", fd, h->status);
@@ -158,8 +138,6 @@ static int do_req(int fd, t_vfs_sig_head *h, t_vfs_sig_body *b)
 			return RECV_ADD_EPOLLOUT;
 
 		case NEWTASK_REQ:
-			if (check_login(peer->sock_stat, fd))
-				return RECV_ADD_EPOLLIN;
 			if (h->status != TASK_DISPATCH )
 			{
 				LOG(vfs_sig_log_err, LOG_ERROR, "fd[%d] recv a bad NEWTASK_REQ status[%x]!\n", fd, h->status);
@@ -182,8 +160,6 @@ static int do_req(int fd, t_vfs_sig_head *h, t_vfs_sig_body *b)
 			return RECV_ADD_EPOLLIN;
 
 		case NEWTASK_RSP:
-			if (check_login(peer->sock_stat, fd))
-				return RECV_ADD_EPOLLIN;
 			if (h->bodylen != sizeof(t_task_base))
 			{
 				LOG(vfs_sig_log_err, LOG_ERROR, "fd[%d] recv %s a bad bodylen[%d]!\n", fd, str_cmd[h->cmdid], h->bodylen);

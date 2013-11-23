@@ -5,17 +5,6 @@
 */
 
 #include "c_api.h"
-static int check_login(uint8_t sock_stat, int fd)
-{
-	if (sock_stat <= CONNECTED)
-	{
-		struct conn *curcon = &acon[fd];
-		vfs_cs_peer *peer = (vfs_cs_peer *) curcon->user;
-		LOG(vfs_sig_log_err, LOG_ERROR, "fd[%d] %s err [%u]!\n", fd, FUNC, peer->ip);
-		return -1;
-	}
-	return 0;
-}
 
 static uint32_t get_a_ok_ip(t_cs_dir_info * csinfos, int isp, int8_t *index)
 {
@@ -379,8 +368,6 @@ static int do_req(int fd, t_vfs_sig_head *h, t_vfs_sig_body *b)
 	switch(h->cmdid)
 	{
 		case HEARTBEAT_REQ:
-			if (check_login(peer->sock_stat, fd))
-				return RECV_ADD_EPOLLIN;
 			n = create_sig_msg(HEARTBEAT_RSP, h->status, &ob, obuf, bodylen);
 			set_client_data(fd, obuf, n);
 			peer->sock_stat = SEND_LAST;
@@ -392,8 +379,6 @@ static int do_req(int fd, t_vfs_sig_head *h, t_vfs_sig_body *b)
 			return RECV_ADD_EPOLLOUT;
 
 		case HEARTBEAT_RSP:
-			if (check_login(peer->sock_stat, fd))
-				return RECV_ADD_EPOLLIN;
 			peer->sock_stat = IDLE;
 			if (h->bodylen != 1)
 				LOG(vfs_sig_log_err, LOG_ERROR, "fd[%d] recv a bad hb rsp, no SERVER_STAT\n", fd);
@@ -431,8 +416,6 @@ static int do_req(int fd, t_vfs_sig_head *h, t_vfs_sig_body *b)
 			return RECV_ADD_EPOLLIN;
 
 		case TASKINFO_RSP:
-			if (check_login(peer->sock_stat, fd))
-				return RECV_ADD_EPOLLIN;
 			if (h->status != TASKINFO_T_2_C)
 			{
 				LOG(vfs_sig_log_err, LOG_ERROR, "fd[%d] recv a bad TASKINFO_RSP status[%x]!\n", fd, h->status);
@@ -442,8 +425,6 @@ static int do_req(int fd, t_vfs_sig_head *h, t_vfs_sig_body *b)
 			return RECV_ADD_EPOLLOUT;
 
 		case NEWTASK_REQ:
-			if (check_login(peer->sock_stat, fd))
-				return RECV_ADD_EPOLLIN;
 			if (h->bodylen != sizeof(t_task_base))
 			{
 				LOG(vfs_sig_log_err, LOG_ERROR, "fd[%d] recv a bad NEWTASK_REQ bodylen[%d]!\n", fd, h->bodylen);
@@ -461,14 +442,10 @@ static int do_req(int fd, t_vfs_sig_head *h, t_vfs_sig_body *b)
 			return RECV_ADD_EPOLLIN;
 
 		case NEWTASK_RSP:
-			if (check_login(peer->sock_stat, fd))
-				return RECV_ADD_EPOLLIN;
 			LOG(vfs_sig_log, LOG_DEBUG, "fd[%d] recv a NEWTASK_RSP\n", fd);
 			return RECV_ADD_EPOLLIN;
 
 		case SYNC_DIR_REQ:
-			if (check_login(peer->sock_stat, fd))
-				return RECV_ADD_EPOLLIN;
 			if (h->bodylen != sizeof(t_vfs_sync_task))
 			{
 				LOG(vfs_sig_log_err, LOG_ERROR, "fd[%d] recv a bad SYNC_DIR_REQ bodylen[%d]!\n", fd, h->bodylen);
@@ -479,8 +456,6 @@ static int do_req(int fd, t_vfs_sig_head *h, t_vfs_sig_body *b)
 			return RECV_ADD_EPOLLOUT;
 
 		case SYNC_DIR_RSP:
-			if (check_login(peer->sock_stat, fd))
-				return RECV_ADD_EPOLLIN;
 			LOG(vfs_sig_log, LOG_DEBUG, "fd[%d] recv a SYNC_DIR_RSP\n", fd);
 			if (peer->vfs_sync_list)
 			{
@@ -491,8 +466,6 @@ static int do_req(int fd, t_vfs_sig_head *h, t_vfs_sig_body *b)
 			return RECV_ADD_EPOLLIN;
 
 		case SYNC_DEL_REQ:
-			if (check_login(peer->sock_stat, fd))
-				return RECV_ADD_EPOLLIN;
 			if (h->bodylen != sizeof(t_vfs_sync_task))
 			{
 				LOG(vfs_sig_log_err, LOG_ERROR, "fd[%d] recv a bad SYNC_DEL_REQ bodylen[%d]!\n", fd, h->bodylen);
@@ -503,8 +476,6 @@ static int do_req(int fd, t_vfs_sig_head *h, t_vfs_sig_body *b)
 			return RECV_ADD_EPOLLOUT;
 
 		case SYNC_DEL_RSP:
-			if (check_login(peer->sock_stat, fd))
-				return RECV_ADD_EPOLLIN;
 			LOG(vfs_sig_log, LOG_DEBUG, "fd[%d] recv a SYNC_DEL_RSP\n", fd);
 			if (peer->vfs_sync_list)
 			{

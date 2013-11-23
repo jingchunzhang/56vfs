@@ -74,6 +74,7 @@ static int do_bk_file(char *file, char *day, int type)
 	}
 
 	char bkfile[256] = {0x0};
+	/*
 	if (type == ROLE_HOT_CS)
 	{
 		snprintf(bkfile, sizeof(bkfile), "%s/%s", redisdir, basename(file));
@@ -81,6 +82,7 @@ static int do_bk_file(char *file, char *day, int type)
 			LOG(cdc_db_log, LOG_ERROR, "link %s to %s err %m\n", file, bkfile);
 		memset(bkfile, 0, sizeof(bkfile));
 	}
+	*/
 	snprintf(bkfile, sizeof(bkfile), "%s/%s", bkdir, basename(file));
 
 	if(rename(file, bkfile))
@@ -133,9 +135,6 @@ int do_refresh_run_task()
 		return -1;
 	}
 
-	char curtime[16] = {0x0};
-	get_strtime(curtime);
-
 	FILE *fpin = NULL;
 	while((dirp = readdir(dp)) != NULL) {
 		if (dirp->d_name[0] == '.')
@@ -165,8 +164,18 @@ int do_refresh_run_task()
 			role = UNKOWN;
 		}
 
+		char curtime[16] = {0x0};
+		get_strtime(curtime);
 		if(strncmp(curtime, day, 8))
-			continue;
+		{
+			if (process_curday)
+				continue;
+		}
+		else 
+		{
+			if (process_curday == 0)
+				continue;
+		}
 		if (role != UNKOWN)
 		{
 			LOG(cdc_db_log, LOG_NORMAL, "process %s\n", fullfile);

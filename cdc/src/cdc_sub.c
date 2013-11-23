@@ -140,16 +140,27 @@ static void link_fcs_cs_file(char *infile, t_path_info *path, int type)
 {
 	char bkfile[256] = {0x0};
 	snprintf(bkfile, sizeof(bkfile), "%s/%s", path->outdir, basename(infile));
-	if (rename(infile, bkfile))
-		LOG(fplog, LOG_ERROR, "rename %s %s error %m!\n", infile, bkfile);
+	if (link(infile, bkfile))
+		LOG(fplog, LOG_ERROR, "link %s %s error %m!\n", infile, bkfile);
 
 	if (type)
+	{
+		if (type == 2)
+		{
+			memset(bkfile, 0, sizeof(bkfile));
+			snprintf(bkfile, sizeof(bkfile), "%s/%s", path->bkdir, basename(infile));
+			if (rename(infile, bkfile))
+				LOG(fplog, LOG_ERROR, "rename %s %s error %m!\n", infile, bkfile);
+		}
+		else if (unlink(infile))
+			LOG(fplog, LOG_ERROR, "link %s %s error %m!\n", infile, bkfile);
 		return;
+	}
 
 	char workfile[256] = {0x0};
 	snprintf(workfile, sizeof(workfile), "%s/%s", path->workdir, basename(infile));
-	if (link(bkfile, workfile))
-		LOG(fplog, LOG_ERROR, "link %s %s error %m!\n", bkfile, workfile);
+	if (rename(infile, workfile))
+		LOG(fplog, LOG_ERROR, "rename %s %s error %m!\n", infile, workfile);
 }
 
 static int cdc_sub(t_path_info *path, int type)
@@ -227,7 +238,7 @@ static int cdc_sub(t_path_info *path, int type)
 		{
 			fclose(fphot);
 			if (err)
-				link_fcs_cs_file(hotfile, path, 1);
+				link_fcs_cs_file(hotfile, path, 2);
 			else
 				unlink(hotfile);
 		}

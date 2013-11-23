@@ -23,6 +23,7 @@
 t_path_info cdc_path;
 char *redisdir = NULL;
 int cdc_db_log = -1;
+int process_curday = 1;
 #include "cdc_db_sub.c"
 
 void EnterDaemonMode(void)
@@ -97,6 +98,7 @@ int init_para(t_path_info * path)
 		LOG(cdc_db_log, LOG_ERROR, "config have not path_cdc_redis!\n");
 		return -1;
 	}
+	process_curday = myconfig_get_intval("process_curday", 1);
 	return init_db();
 }
 
