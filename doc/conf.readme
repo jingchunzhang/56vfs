@@ -46,8 +46,8 @@
 #集群配置
 	sig_tracker = tracker1.vfs.56.com    #Tracker1
 	sig_tracker = tracker2.vfs.56.com    #Tracker2
-	cs_dir = /home/syncfile              #边缘节点机器集群信息
-	fcsfile = /home/syncfile/fcs_list.txt #源站机器列表
+	cs_dir = /home/syncfile              #边缘节点机器集群信息 文件名格式及文件内容格式参考cs.conf.readme
+	fcsfile = /home/syncfile/fcs_list.txt #源站机器列表 fcs.conf.readme
 
 [csisp]
 #新增isp信息
