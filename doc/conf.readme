@@ -1,0 +1,85 @@
+	disable_watchdog = 1   #是否� watchdog
+	maxfds = 10240         #最大句柄数量
+	sig_port = 49715       #信令端口
+	data_port = 49716      #数据端口
+	timeout = 360          #链路超时
+	real_rm_time = 7200    #删除文件延时时间
+	cs_sync_dir = 1        #是否开启CS目录同步
+	cktimeout = 1          #检查插件svc_timeout间隔，单位秒
+	task_timeout = 86400   #任务超时时间
+	fcs_max_connects = 100 #cs链接源站数据链路并发连接数量
+	cs_max_connects = 200  #cs链接末端数据链路并发连接数量
+	disk_minfree = 20G     #数据磁盘最小剩余
+	timedlock_time = 10    #锁等待时间。
+	sync_dir_count = 10    #24小时CS发起目录同步请求数量
+[log]
+	main_loglevel = debug  #框架日志级别
+	main_logname = ../log/main.log #框架日志名称
+	main_lognum = 12   #框架日志保留数量
+	main_logtime = 21600 #框架日志滚动时间
+
+	#信令链路日志
+	sig_loglevel = debug
+	sig_logname = ../log/sig.log
+	sig_lognum = 12
+	sig_logtime = 21600
+
+	#数据链路日志
+	data_logname = ../log/data.log
+	data_loglevel = debug
+	data_lognum = 12
+	data_logtime = 21600
+
+	#VOSS日志
+	voss_logname = ../log/voss.log
+	voss_loglevel = debug
+	voss_lognum = 12
+	voss_logtime = 21600
+
+	#代理链路日志
+	agent_logname = ../log/agent.log
+	agent_loglevel = debug
+	agent_lognum = 12
+	agent_logtime = 21600
+
+[iplist]
+#集群配置
+	sig_tracker = tracker1.vfs.56.com    #Tracker1
+	sig_tracker = tracker2.vfs.56.com    #Tracker2
+	cs_dir = /home/syncfile              #边缘节点机器集群信息
+	fcsfile = /home/syncfile/fcs_list.txt #源站机器列表
+
+[csisp]
+#新增isp信息
+	newone = undefine,7
+	newone = bbtv,8
+	newone = dxt,9
+	newone = archive1,10
+
+[vfs]
+#VFS全局配置信息
+	test = 0    # 0 :生产1: 测试
+	cs_datadir = /diska/   #边缘节点数据根目录。
+    fcs_datadir = /home/webadm/htdocs/flvdownload   #源站数据根目录。
+	path = /home/vfs/path   #VFS运行环境目录
+	deldir = /home/vfs/path/delfile  #VFS删除文件信息目录
+
+[voss]
+#VOSS配置信息
+	server_ip = voss.vfs.56.com   #voss 服务器。
+	tmpdir = /home/vfs/path/tmpdir  #VOSS连接不上时，任务数据存放的临时目录。
+	timesplice = 60  #代理线程网络阻塞时间
+	interval = 300 #voss吐出文件频率
+
+[file]
+	#处理文件后缀列表，其它文件忽略。
+	allow_suffix = *.flv
+	allow_suffix = *.flv.mp4
+
+[proxy]
+	#代理设置 代理采用http代理协议， rsync http proxy
+	isp = edu  #需要设置的代理末端ISP
+	edu_host = 10.16.93.202  #对应的IP
+	edu_port = 5680  #对应的端口。
+
+
