@@ -24,11 +24,10 @@ install:
 	mkdir /diska/vfs/path/indir -p;
 	mkdir /diska/vfs/path/bkdir -p;
 	mkdir /diska/vfs/path/delfile -p;
-	cd network; cp vfs_master /diska/vfs/bin; cp vfs_master.conf /diska/vfs/conf; cp fcs_list.txt /diska/vfs/bin
+	cd network; cp vfs_master /diska/vfs/bin; cp vfs_master.conf /diska/vfs/conf; 
 	cd network/tracker ; cp *.so /diska/vfs/bin
 	cd network/cs; cp *.so /diska/vfs/bin
 	cd network/data; cp *.so /diska/vfs/bin
-	rm -rf /diska/vfs/csdir; cp -r csdir /diska/vfs/
 	cp script/*.sh /diska/vfs/bin
 	cd network/fcs; cp *.so /diska/vfs/bin
 	cd network/voss; cp *.so /diska/vfs/bin
