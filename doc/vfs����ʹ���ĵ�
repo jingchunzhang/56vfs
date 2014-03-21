@@ -1,0 +1,146 @@
+# vfs部署文档
+
+<br/>
+## vfs的部署
+
+#### 准备工作
+修改`~/sys_dev/56vfs/code/makefile`，添加变量`installdir`，为部署目录。
+
+```
+installdir = /home/jingchun.zhang/vfs
+SUBDIRS = lib 3rdlib network network/tracker network/cs network/fcs network/data network/voss network/http cdc network/cdc_http network/cdc_so
+all:
+        @list='$(SUBDIRS)'; for subdir in $$list; do \
+        echo "Making all in $$list"; \
+        (cd $$subdir && make); \
+        done;
+
+clean:
+        @list='$(SUBDIRS)'; for subdir in $$list; do \
+        echo "Making all in $$list"; \
+        (cd $$subdir && make clean); \
+        done;
+
+install:
+        rm -rf $(installdir)/*;
+        mkdir $(installdir)/bin -p;
+        mkdir $(installdir)/log -p;
+        mkdir $(installdir)/conf -p;
+        mkdir $(installdir)/data -p;
+        mkdir $(installdir)/path/tmpdir -p;
+        mkdir $(installdir)/path/outdir -p;
+        mkdir $(installdir)/path/datadir -p;
+        mkdir $(installdir)/path/workdir -p;
+        mkdir $(installdir)/path/indir -p;
+        mkdir $(installdir)/path/bkdir -p;
+        mkdir $(installdir)/path/delfile -p;
+        cd network; cp vfs_master $(installdir)/bin; cp vfs_master.conf $(installdir)/conf;
+        cd network/tracker ; cp *.so $(installdir)/bin
+        cd network/cs; cp *.so $(installdir)/bin
+        cd network/data; cp *.so $(installdir)/bin
+        rm -rf $(installdir)/csdir; cp -r csdir $(installdir)/
+        cp script/*.sh $(installdir)/bin
+        cd network/fcs; cp *.so $(installdir)/bin
+        cd network/voss; cp *.so $(installdir)/bin
+
+install_cdc_m:
+        rm -rf $(installdir)/*;
+        mkdir $(installdir)/bin -p;
+        mkdir $(installdir)/log -p;
+        mkdir $(installdir)/conf -p;
+        cd network; cp cdc_master $(installdir)/bin; cp cdc_master.conf $(installdir)/conf;
+        cd network/cdc_http; cp *.so $(installdir)/bin;
+
+install_cdc_r:
+        rm -rf $(installdir)/*;
+        mkdir $(installdir)/bin -p;
+        mkdir $(installdir)/log -p;
+        mkdir $(installdir)/conf -p;
+        cd network; cp cdc_r $(installdir)/bin; cp cdc_r.conf $(installdir)/conf;
+        cd network/cdc_so; cp *.so $(installdir)/bin;
+```
+
+
+
+<br/>
+#### 编译vfs_master，部署voss、fcs、cs
+
+1. 修改`~/sys_dev/56vfs/code/makefile`的installdir变量为`installdir = /home/jingchun.zhang/vfs`
+2. 修改`~/sys_dev/56vfs/code/network/makefile`第一行的NS变量为`NS=vfs_master`
+
+```
+cd ~/sys_dev/56vfs/code
+make clean && make
+make install
+```
+这样可部署voss、fcs、cs。
+
+
+<br/>
+#### 编译cdc_master （cdc_http，加载cdc_http.so）
+1. 修改`~/sys_dev/56vfs/code/makefile`的installdir变量为`installdir = /home/jingchun.zhang/cdc_m`
+2. 修改`~/sys_dev/56vfs/code/network/makefile`第一行的NS变量为`NS=cdc_master`
+
+```
+cd ~/sys_dev/56vfs/code
+make clean && make
+make install_cdc_m
+```
+
+
+<br/>
+#### 编译cdc_r （加载cdc_r.so）
+1. 修改`~/sys_dev/56vfs/code/makefile`的installdir变量为`installdir = /home/jingchun.zhang/cdc_r`
+2. 修改`~/sys_dev/56vfs/code/network/makefile`第一行的NS变量为`NS=cdc_r`
+
+```
+cd ~/sys_dev/56vfs/code
+make clean && make
+make install_cdc_r
+```
+
+<br/>
+#### 编译cdc
+
+```
+cd ~/sys_dev/56vfs/code/cdc
+make clean && make
+```
+编译后的程序在`~/sys_dev/56vfs/code/cdc/src`目录下，包含如下程序
+
+```
+cdc 					加载共享内存，更新内存 
+cdctool 				cdc内容管理工具	
+cdc_db 					处理文件path/cdc_http_in/*  保存任务处理情况入库
+cdc_db_stat 			把fcs、cs机器状态入库，供调度机查
+cdc_redis			把任务信息写入redis
+cdc_db_merge			合并db里的分表
+cdc_db_del				合并旧表
+cdc_migrate 			
+cdc_migrate_normal
+```
+数据流程： vfs->voss->cdc->cdc_db(cdc_redis)
+
+cdc采用共享内存hash存储vfs的分发结果数据（默认每个文件的最大备份是32，可修改，修改MAX_IP_IN_DIR，如同同一个文件的信息，共享内存放不下，会放进cdc_redis)
+
+
+<br/>
+#### cdc的部署
+`cdc_master`、`cdc_r`、`cdc`，以及各个cds工具，部署在同一机器，使用共享内存。
+
+cdc工具有 `cdc_db_stat`, `cdc_redis_tool`, `cdc_db_merge`, `cdc_db_del`。
+
+
+使用文档：
+
+1，vfs的配置完成后，启动vfs即可 ，如果启动不成功，很有可能是机器没有加入vfs集群，没法找到自己的角色，详细错误请看日志。
+
+2，vfs系统实时任务发起是源站，vfs监控源站的存储目录（30*30），inotify事件触发后，vfs源站开始下发任务；
+
+3，任务到达tracker层后，会根据LB原则进行调度到某一台机器；
+
+4，末端机器接收到任务后，从源站获取文件，成功后从本地同步到同组存储机器；
+
+5，末端机器做完任务后，反馈任务信息到tracker，tracker反馈到源站，一个完整的任务完成；
+
+源站监听的inotify事件类型：IN_CLOSE_WRITE|IN_DELETE|IN_MOVED_FROM|IN_MOVED_TO
