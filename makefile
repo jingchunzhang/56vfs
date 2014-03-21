@@ -1,4 +1,6 @@
 SUBDIRS = lib 3rdlib network network/tracker network/cs network/fcs network/data network/voss network/http cdc network/cdc_http network/cdc_so
+installdir = /home/vfs/
+#curday = $(shell date '+%Y%m%d')
 all:
 	@list='$(SUBDIRS)'; for subdir in $$list; do \
 	echo "Making all in $$list"; \
@@ -12,23 +14,40 @@ clean:
 	done;
 
 install:
-	rm -rf /diska/vfs/*;
-	mkdir /diska/vfs/bin -p;
-	mkdir /diska/vfs/log -p;
-	mkdir /diska/vfs/conf -p;
-	mkdir /diska/vfs/data -p;
-	mkdir /diska/vfs/path/tmpdir -p;
-	mkdir /diska/vfs/path/outdir -p;
-	mkdir /diska/vfs/path/datadir -p;
-	mkdir /diska/vfs/path/workdir -p;
-	mkdir /diska/vfs/path/indir -p;
-	mkdir /diska/vfs/path/bkdir -p;
-	mkdir /diska/vfs/path/delfile -p;
-	cd network; cp vfs_master /diska/vfs/bin; cp vfs_master.conf /diska/vfs/conf; 
-	cd network/tracker ; cp *.so /diska/vfs/bin
-	cd network/cs; cp *.so /diska/vfs/bin
-	cd network/data; cp *.so /diska/vfs/bin
-	cp script/*.sh /diska/vfs/bin
-	cd network/fcs; cp *.so /diska/vfs/bin
-	cd network/voss; cp *.so /diska/vfs/bin
+	rm -rf $(installdir)/*;
+	mkdir $(installdir)/bin -p;
+	mkdir $(installdir)/log -p;
+	mkdir $(installdir)/conf -p;
+	mkdir $(installdir)/data -p;
+	mkdir $(installdir)/path/tmpdir -p;
+	mkdir $(installdir)/path/outdir -p;
+	mkdir $(installdir)/path/datadir -p;
+	mkdir $(installdir)/path/workdir -p;
+	mkdir $(installdir)/path/indir -p;
+	mkdir $(installdir)/path/bkdir -p;
+	mkdir $(installdir)/path/delfile -p;
+	cd network; cp vfs_master $(installdir)/bin; cp vfs_master.conf $(installdir)/conf;
+	cd network/tracker ; cp *.so $(installdir)/bin
+	cd network/cs; cp *.so $(installdir)/bin
+	cd network/data; cp *.so $(installdir)/bin
+	rm -rf $(installdir)/csdir; cp -r csdir $(installdir)/
+	cp script/*.sh $(installdir)/bin
+	cd network/fcs; cp *.so $(installdir)/bin
+	cd network/voss; cp *.so $(installdir)/bin
+
+install_cdc_m:
+	rm -rf $(installdir)/*;
+	mkdir $(installdir)/bin -p;
+	mkdir $(installdir)/log -p;
+	mkdir $(installdir)/conf -p;
+	cd network; cp cdc_master $(installdir)/bin; cp cdc_master.conf $(installdir)/conf;
+	cd network/cdc_http; cp *.so $(installdir)/bin;
+
+install_cdc_r:
+	rm -rf $(installdir)/*;
+	mkdir $(installdir)/bin -p;
+	mkdir $(installdir)/log -p;
+	mkdir $(installdir)/conf -p;
+	cd network; cp cdc_r $(installdir)/bin; cp cdc_r.conf $(installdir)/conf;
+	cd network/cdc_so; cp *.so $(installdir)/bin;
 
