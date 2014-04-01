@@ -30,7 +30,6 @@ install:
 	cd network/tracker ; cp *.so $(installdir)/bin
 	cd network/cs; cp *.so $(installdir)/bin
 	cd network/data; cp *.so $(installdir)/bin
-	rm -rf $(installdir)/csdir; cp -r csdir $(installdir)/
 	cp script/*.sh $(installdir)/bin
 	cd network/fcs; cp *.so $(installdir)/bin
 	cd network/voss; cp *.so $(installdir)/bin
