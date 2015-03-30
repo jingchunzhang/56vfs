@@ -26,8 +26,8 @@ int vfs_sig_log = -1;
 extern uint8_t self_stat ;
 extern t_ip_info self_ipinfo;
 /* online list */
-static list_head_t activelist;  //ÓÃÀ´¼ì²â³¬Ê±
-static list_head_t online_list[256]; //ÓÃÀ´¿ìËÙ¶¨Î»²éÕÒ
+static list_head_t activelist;  //ç”¨æ¥æ£€æµ‹è¶…æ—¶
+static list_head_t online_list[256]; //ç”¨æ¥å¿«é€Ÿå®šä½æŸ¥æ‰¾
 
 int g_proxyed = 0;
 t_vfs_up_proxy g_proxy;
@@ -157,7 +157,7 @@ int svc_initconn(int fd)
 	return 0;
 }
 
-/*Ð£ÑéÊÇ·ñÓÐÒ»¸öÍêÕûÇëÇó*/
+/*æ ¡éªŒæ˜¯å¦æœ‰ä¸€ä¸ªå®Œæ•´è¯·æ±‚*/
 static int check_req(int fd)
 {
 	LOG(vfs_sig_log, LOG_DEBUG, "%s:%s:%d\n", ID, FUNC, LN);
@@ -214,9 +214,9 @@ recvfileing:
 			return RECV_ADD_EPOLLIN;  /*no suffic data, need to get data more */
 		}
 		LOG(vfs_sig_log, LOG_TRACE, "fd[%d] get file %s:%d!\n", fd, task->base.filename, datalen);
-		int remainlen = task->sub.processlen - task->sub.lastlen;
+		size_t remainlen = task->sub.processlen - task->sub.lastlen;
 		datalen = datalen <= remainlen ? datalen : remainlen ; 
-		int n = write(peer->local_in_fd, data, datalen);
+		size_t n = write(peer->local_in_fd, data, datalen);
 		if (n < 0)
 		{
 			LOG(vfs_sig_log, LOG_ERROR, "fd[%d] write error %m close it!\n", fd);
