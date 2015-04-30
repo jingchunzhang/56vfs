@@ -20,6 +20,21 @@
 
 int vfs_http_log = -1;
 
+enum {GET = 0, HEAD};
+
+typedef struct {
+	char url[1024];
+	uint8_t type;
+	uint8_t range;
+	off_t s;
+	off_t e;
+} t_http_peer;
+
+int svc_pinit()
+{
+	return 0;
+}
+
 int svc_init() 
 {
 	char *logname = myconfig_get_value("log_data_logname");
@@ -45,22 +60,42 @@ int svc_initconn(int fd)
 	LOG(vfs_http_log, LOG_DEBUG, "%s:%s:%d\n", ID, FUNC, LN);
 	struct conn *curcon = &acon[fd];
 	if (curcon->user == NULL)
-		curcon->user = malloc(1024);
+		curcon->user = malloc(sizeof(t_http_peer));
 	if (curcon->user == NULL)
 	{
 		LOG(vfs_http_log, LOG_ERROR, "malloc err %m\n");
 		return RET_CLOSE_MALLOC;
 	}
+	memset(curcon->user, 0, sizeof(t_http_peer));
 	LOG(vfs_http_log, LOG_DEBUG, "a new fd[%d] init ok!\n", fd);
 	return 0;
+}
+
+static void get_range(char *q, t_http_peer *peer)
+{
+	char *s = strstr(q, "Range: bytes=");
+	if (s == NULL)
+		return;
+	s += strlen("Range: bytes=");
+
+	peer->range = 1;
+	peer->s = atol(s);
+	char *e = strchr(s, '-');
+	if (e == NULL)
+		return;
+	peer->e = atol(e+1);
+	if (peer->e < peer->s)
+		peer->e = peer->s;
 }
 
 static int check_request(int fd, char* data, int len) 
 {
 	if(len < 14)
 		return 0;
-		
 	struct conn *c = &acon[fd];
+	t_http_peer *peer = (t_http_peer *) c->user;
+		
+	LOG(vfs_http_log, LOG_NORMAL, "%.*s", len, data); 
 	if(!strncmp(data, "GET /", 5)) {
 		char* p;
 		if((p = strstr(data + 5, "\r\n\r\n")) != NULL) {
@@ -68,9 +103,28 @@ static int check_request(int fd, char* data, int len)
 			int len;
 			if((q = strstr(data + 5, " HTTP/")) != NULL) {
 				len = q - data - 5;
+				get_range(q, peer);
 				if(len < 1023) {
-					strncpy(c->user, data + 5, len);	
-					((char*)c->user)[len] = '\0';
+					strncpy(peer->url, data + 5, len);	
+					peer->type = GET;
+					return p - data + 4;
+				}
+			}
+			return -2;	
+		}
+		else
+			return 0;
+	}
+	else if(!strncmp(data, "HEAD /", 6)) {
+		char* p;
+		if((p = strstr(data + 6, "\r\n\r\n")) != NULL) {
+			char* q;
+			int len;
+			if((q = strstr(data + 6, " HTTP/")) != NULL) {
+				len = q - data - 6;
+				if(len < 1023) {
+					strncpy(peer->url, data + 6, len);	
+					peer->type = HEAD;
 					return p - data + 4;
 				}
 			}
@@ -92,7 +146,8 @@ static int handle_request(int cfd)
 	struct stat st;
 	
 	struct conn *c = &acon[cfd];
-	sprintf(filename, "./%s", (char*)c->user);
+	t_http_peer *peer = (t_http_peer *) c->user;
+	sprintf(filename, "./%s", peer->url);
 	LOG(vfs_http_log, LOG_NORMAL, "file = %s\n", filename);
 	
 	fd = open(filename, O_RDONLY);
@@ -104,10 +159,24 @@ static int handle_request(int cfd)
 	else {
 		sprintf(httpheader, "HTTP/1.1 403 File Not Found\r\n\r\n");	
 	}
-	//c->close_imme = 1; //发送完回复包后主动关闭连接	
+	//c->close_imme = 1; //鍙戦�佸畬鍥炲鍖呭悗涓诲姩鍏抽棴杩炴帴	
 	set_client_data(cfd, httpheader, strlen(httpheader));
 	if(fd > 0)
-		set_client_fd(cfd, fd, 0, (uint32_t)st.st_size); 	
+	{
+		if (peer->type == GET)
+		{
+			if (peer->range)
+			{
+				off_t reqend = peer->e > (st.st_size - 1) ? (st.st_size - 1) : peer->e;
+				off_t len = reqend - peer->s + 1;
+				set_client_fd(cfd, fd, peer->s, len); 
+			}
+			else
+				set_client_fd(cfd, fd, 0, st.st_size); 
+		}
+		else
+			close(fd);
+	}
 	return 0;
 }
 
