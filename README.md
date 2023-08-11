@@ -13,6 +13,6 @@
 
 我的邮箱：jczhang AT 126.com   danezhang77 AT gmail.com
 
-欢迎加入QQ讨论群：363058492
+如有需求，请联系个人WeChat：danezhang_tt
 
 www.56.com video file system
